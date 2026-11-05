@@ -2714,6 +2714,14 @@ static void weapon_trigger_fire(
 		fired= TRUE;
 	}
 
+	/* port: a skin's body's shots are counted (port/linux/game/player_skins.c) */
+	if (fired)
+	{
+		extern void player_skins_weapon_fired(long unit_index);
+
+		player_skins_weapon_fired(owner_object_index);
+	}
+
 	if (trigger_definition->firing_effects.count>0)
 	{
 		struct trigger_firing_effect *firing_effect;

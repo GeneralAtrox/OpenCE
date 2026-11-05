@@ -36,6 +36,8 @@ What a skin's body cannot do (it is a campaign character's):
 #include "game/game_engine.h"
 #include "game/players.h"
 #include "units/units.h"
+#include "items/weapons.h"
+#include "items/weapon_definitions.h"
 #include "tag_files/tag_groups.h"
 
 #include "network_coop.h"
@@ -138,6 +140,8 @@ static struct
 {
 	/* each body's biped in the map loaded, or NONE */
 	long bipeds[NUMBER_OF_SKIN_BODIES];
+	/* the shots each body's weapons have fired, in this map */
+	long shots[NUMBER_OF_SKIN_BODIES];
 	boolean loaded;
 } player_skins_globals;
 
@@ -175,6 +179,43 @@ static short player_skin_of(
 	player = player_get(player_index);
 
 	return player_skins_valid(player->network_player_data.icon_index);
+}
+
+/* a weapon a skin's body was given with no rounds in a magazine (the
+level's own weapons, made for an actor, which needs none): the magazine is
+filled, as a player's is */
+static void skin_weapons_fill(
+	long unit_index)
+{
+	struct unit_datum *unit = unit_get(unit_index);
+	short slot;
+
+	for (slot = 0; slot < MAXIMUM_WEAPONS_PER_UNIT; slot++)
+	{
+		long weapon_index = unit->unit.weapon_object_indices[slot];
+		struct weapon_datum *weapon;
+		struct weapon_definition *definition;
+		short magazine_index;
+
+		if (weapon_index == NONE)
+			continue;
+		weapon = weapon_get(weapon_index);
+		definition = weapon_definition_get(weapon->definition_index);
+		for (magazine_index = 0; magazine_index < definition->weapon.magazines.count && magazine_index < 2; magazine_index++)
+		{
+			struct weapon_magazine_definition *magazine = TAG_BLOCK_GET_ELEMENT(&definition->weapon.magazines,
+				magazine_index, struct weapon_magazine_definition);
+
+			if (weapon->weapon.magazines[magazine_index].rounds_total + weapon->weapon.magazines[magazine_index].rounds_loaded > 0)
+				continue;
+			weapon->weapon.magazines[magazine_index].rounds_loaded = magazine->rounds_loaded_maximum;
+			weapon->weapon.magazines[magazine_index].rounds_total = magazine->rounds_total_maximum;
+			platform_log("player skins: a weapon's magazine %d was empty: filled with %d and %d rounds", (int)magazine_index,
+				(int)magazine->rounds_loaded_maximum, (int)magazine->rounds_total_maximum);
+		}
+	}
+
+	return;
 }
 
 /* ---------- public code */
@@ -267,8 +308,30 @@ void player_skins_unit_spawned(
 	body = skin_body_of_definition(unit_get(unit_index)->definition_index);
 	if (skin == _player_skin_chief && body == NONE)
 		return;
+	if (body != NONE)
+		skin_weapons_fill(unit_index);
 	platform_log("player skins: player %ld (%s) is %s", DATUM_INDEX_TO_ABSOLUTE_INDEX(player_index),
 		player_skin_definitions[skin].word, body == NONE ? "the map's own unit" : skin_body_bipeds[body]);
+
+	return;
+}
+
+void player_skins_weapon_fired(
+	long unit_index)
+{
+	short body;
+
+	if (unit_index == NONE || !player_skins_globals.loaded)
+		return;
+	body = skin_body_of_definition(object_get(unit_index)->definition_index);
+	if (body == NONE)
+		return;
+	player_skins_globals.shots[body]++;
+	if (player_skins_globals.shots[body] == 1 || player_skins_globals.shots[body] % 25 == 0)
+	{
+		platform_log("player skins: %s has fired %ld shots", skin_body_bipeds[body],
+			player_skins_globals.shots[body]);
+	}
 
 	return;
 }
@@ -292,7 +355,10 @@ void player_skins_tags_unloaded(
 	short body;
 
 	for (body = 0; body < NUMBER_OF_SKIN_BODIES; body++)
+	{
 		player_skins_globals.bipeds[body] = NONE;
+		player_skins_globals.shots[body] = 0;
+	}
 	player_skins_globals.loaded = FALSE;
 
 	return;
