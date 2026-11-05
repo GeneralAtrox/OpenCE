@@ -3851,6 +3851,10 @@ void network_game_server_change_game_variant(
 
 	csmemcpy(&server->game.variant, variant, sizeof(server->game.variant));
 	network_game_server_variant_options(&server->game.variant, &server->game.variant_options);
+	{
+		extern void platform_log(char const *format, ...);
+		platform_log("variant diag: server variant set, engine %ld", (long)server->game.variant.game_engine_index);
+	}
 
 	if (!network_game_server_send_game_data_pregame(server))
 	{
