@@ -1307,8 +1307,9 @@ long scenario_tags_load(
 			anything reads it (port/linux/game/tag_validate.c): a map whose
 			tags' pointers cannot be trusted is refused; what can be
 			corrected is */
-			/* port: a stock multiplayer map is given the tags of the bodies its
-			players may play as, from The Maw's, after its own and checked
+			/* port: a stock multiplayer map, and a campaign level in co-op, is
+			given the tags of the bodies its players may play as that it has
+			not got, from Two Betrayals', after its own and checked
 			with them (port/linux/game/skin_tags.c): if they are refused, the
 			map's own are checked again alone */
 			{

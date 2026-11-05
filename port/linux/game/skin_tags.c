@@ -4,7 +4,9 @@ SKIN_TAGS.C
 The tags of the bodies a player may play as besides the Master Chief
 (player_skins.c): the Elites', the Flood combat forms' and the Hunter's.
 Only the campaign's levels have them; Two Betrayals (c40.map) has every one.
-When a stock multiplayer map loads (scenario_tags_load), before its tags are
+When a stock multiplayer map, or a campaign level in a network game (co-op:
+it lacks some, a10 the Flood and the Hunter), loads (scenario_tags_load),
+before its tags are
 checked, their tags are copied from Two Betrayals' into the tag cache after the
 map's own, with every tag they need that the map has not got (a tag of the
 same group and name as one of the map's is the map's), and the map's tag
@@ -41,6 +43,7 @@ and is not made: distributed_client_change_valid).
 #include "cache/physical_memory_map.h"
 #include "scenario/scenario_definitions.h"
 #include "bitmaps/bitmap_group.h"
+#include "game/game.h"
 #include "game/game_globals.h"
 #include "units/unit_definitions.h"
 #include "rasterizer/rasterizer_geometry.h"
@@ -76,6 +79,7 @@ enum
 	CACHE_HEADER_VERSION = 5,
 	TAG_HEADER_SIGNATURE = 'tags',
 	/* a cache file's header type (cache_file_header's reserved60) */
+	_cache_file_type_solo = 0,
 	_cache_file_type_multiplayer = 1,
 	/* a vertex or index buffer's header (a D3D resource: Common, Data, Lock) */
 	BUFFER_SIZE = 12,
@@ -1329,8 +1333,15 @@ boolean skin_tags_import(
 	skin_free(skin_tags_globals.ranges);
 	memset(&skin_tags_globals, 0, sizeof(skin_tags_globals));
 	tag_validate_set_extra_buffers(NULL, 0, NULL, 0);
-	if (header_type != _cache_file_type_multiplayer || !map_name_text || !_stricmp(map_name_text, SKIN_DONOR_MAP))
+	/* (a campaign level only in co-op: a network game's, game_connection set
+	before its level loads) */
+	if (!(header_type == _cache_file_type_multiplayer ||
+		(header_type == _cache_file_type_solo && (game_connection() == _game_connection_network_server ||
+			game_connection() == _game_connection_network_client))) ||
+		!map_name_text || !_stricmp(map_name_text, SKIN_DONOR_MAP))
+	{
 		return FALSE;
+	}
 	/* (the header is not checked yet: its table must be in the tags) */
 	if (*tag_data_size < (long)sizeof(*header) || *tag_data_size > TAG_CACHE_SIZE ||
 		header->signature != TAG_HEADER_SIGNATURE || header->tag_count <= 0 || header->tag_count > 0xFFFF ||
@@ -1350,8 +1361,11 @@ boolean skin_tags_import(
 	import->map_count = header->tag_count;
 	import->map_instances = (struct skin_instance *)(import->map_data + (header->instances - SKIN_LINK_ADDRESS));
 
-	/* (a map that has the skins' bipeds plays its own) */
-	if (map_tag_find(import, 'bipd', skin_root_bipeds[0]) != NONE)
+	/* (a map that has every skin's biped plays its own; one with some, a
+	campaign level's, keeps its own of those, import_reference) */
+	for (index = 0; skin_root_bipeds[index] && map_tag_find(import, 'bipd', skin_root_bipeds[index]) != NONE; index++)
+		;
+	if (!skin_root_bipeds[index])
 		goto done;
 
 	start = (SKIN_LINK_ADDRESS + import->map_size + 15) & ~15UL;
