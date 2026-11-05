@@ -5914,6 +5914,9 @@ static boolean lobby_join_start(struct widget_instance *widget, short controller
 	struct network_game *game = client ? network_game_client_get_game(client) : NULL;
 	short state_data;
 
+	platform_log("menus: lobby START from controller %d (playing %d, state %d, players %d of %d)", controller + 1,
+		lobby_controller_playing(controller), client ? network_game_client_get_state(client, &state_data) : -1,
+		lobby_player_count, game ? game->maximum_players : -1);
 	if (lobby_controller_playing(controller))
 	{
 		ui_widget_port_dispatch_event(focused_leaf(widget), BUTTON_START, controller, widget_deleted);
