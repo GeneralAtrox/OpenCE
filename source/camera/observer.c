@@ -230,7 +230,7 @@ typedef char observer_displacements_offset_assert[
 typedef char observer_size_assert[
 	sizeof(struct observer) == 0x29C ? 1 : -1];
 typedef char observer_globals_size_assert[
-	sizeof(struct observer_globals) == 0xA74 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (sizeof(struct observer_globals) == 0xA74)) ? 1 : -1];
 
 /* ---------- prototypes */
 

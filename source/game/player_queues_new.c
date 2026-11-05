@@ -207,7 +207,7 @@ struct update_client_globals
 };
 
 typedef char player_action_collection_size_assert[
-	sizeof(struct player_action_collection) == 0x80 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (sizeof(struct player_action_collection) == 0x80)) ? 1 : -1];
 /* the update arrays follow the session limit (the networking units' copies
 of struct server_update must have the same size) */
 typedef char server_update_size_assert[
@@ -223,13 +223,13 @@ typedef char update_server_globals_size_assert[
 typedef char update_server_globals_queues_offset_assert[
 	offsetof(struct update_server_globals, queues) == 0x8 ? 1 : -1];
 typedef char update_client_globals_size_assert[
-	sizeof(struct update_client_globals) == 0x94 + MAXIMUM_CLIENT_UPDATES * sizeof(struct update) ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (sizeof(struct update_client_globals) == 0x94 + MAXIMUM_CLIENT_UPDATES * sizeof(struct update))) ? 1 : -1];
 typedef char update_client_globals_saved_actions_offset_assert[
 	offsetof(struct update_client_globals, saved_action_collection) == 0xC ? 1 : -1];
 typedef char update_client_globals_current_local_player_offset_assert[
-	offsetof(struct update_client_globals, current_local_player) == 0x8C ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct update_client_globals, current_local_player) == 0x8C)) ? 1 : -1];
 typedef char update_client_globals_queues_offset_assert[
-	offsetof(struct update_client_globals, queues) == 0x90 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct update_client_globals, queues) == 0x90)) ? 1 : -1];
 
 /* ---------- prototypes */
 

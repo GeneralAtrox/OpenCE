@@ -67,9 +67,9 @@ struct event_manager_globals
 };
 
 typedef char verify_event_manager_state_size[
-	sizeof(struct event_manager_state) == 0x108 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (sizeof(struct event_manager_state) == 0x108)) ? 1 : -1];
 typedef char verify_event_manager_globals_size[
-	sizeof(struct event_manager_globals) == 0x168 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (sizeof(struct event_manager_globals) == 0x168)) ? 1 : -1];
 
 /* ---------- prototypes */
 

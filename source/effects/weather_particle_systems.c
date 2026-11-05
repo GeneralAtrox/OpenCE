@@ -225,7 +225,7 @@ typedef char weather_particle_system_size_assert[
 typedef char weather_particle_size_assert[
 	sizeof(struct weather_particle) == 0x54 ? 1 : -1];
 typedef char weather_particle_system_globals_size_assert[
-	sizeof(struct weather_particle_system_globals) == 0x274 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (sizeof(struct weather_particle_system_globals) == 0x274)) ? 1 : -1];
 
 /*
  * These three tag-block element layouts are private here because their owner

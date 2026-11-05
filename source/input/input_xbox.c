@@ -209,43 +209,43 @@ typedef char verify_raw_gamepad_state_size[
 typedef char verify_input_gamepad_feedbacks_offset[
 	offsetof(struct input_globals, gamepad_feedbacks) == 0 ? 1 : -1];
 typedef char verify_input_raw_gamepad_states_offset[
-	offsetof(struct input_globals, raw_gamepad_states) == 0x118 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_globals, raw_gamepad_states) == 0x118)) ? 1 : -1];
 typedef char verify_input_suppressed_offset[
-	offsetof(struct input_globals, suppressed) == 0x138 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_globals, suppressed) == 0x138)) ? 1 : -1];
 typedef char verify_input_update_thread_started_offset[
-	offsetof(struct input_globals, update_thread_started) == 0x139 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_globals, update_thread_started) == 0x139)) ? 1 : -1];
 typedef char verify_input_gamepad_handles_offset[
-	offsetof(struct input_globals, gamepad_handles) == 0x13C ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_globals, gamepad_handles) == 0x13C)) ? 1 : -1];
 typedef char verify_input_gamepad_states_offset[
-	offsetof(struct input_globals, gamepad_states) == 0x14C ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_globals, gamepad_states) == 0x14C)) ? 1 : -1];
 typedef char verify_input_suppressed_gamepad_state_offset[
-	offsetof(struct input_globals, suppressed_gamepad_state) == 0x1EC ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_globals, suppressed_gamepad_state) == 0x1EC)) ? 1 : -1];
 typedef char verify_input_gamepad_rumbler_states_offset[
-	offsetof(struct input_globals, gamepad_rumbler_states) == 0x214 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_globals, gamepad_rumbler_states) == 0x214)) ? 1 : -1];
 typedef char verify_input_update_thread_handle_offset[
-	offsetof(struct input_globals, update_thread_handle) == 0x224 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_globals, update_thread_handle) == 0x224)) ? 1 : -1];
 typedef char verify_input_update_event_handle_offset[
-	offsetof(struct input_globals, update_event_handle) == 0x228 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_globals, update_event_handle) == 0x228)) ? 1 : -1];
 typedef char verify_input_update_event_pending_offset[
-	offsetof(struct input_globals, update_event_pending) == 0x22C ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_globals, update_event_pending) == 0x22C)) ? 1 : -1];
 typedef char verify_input_frame_active_offset[
-	offsetof(struct input_globals, frame_active) == 0x22D ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_globals, frame_active) == 0x22D)) ? 1 : -1];
 typedef char verify_input_keyboard_queue_state_offset[
-	offsetof(struct input_globals, keyboard_queue_state) == 0x230 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_globals, keyboard_queue_state) == 0x230)) ? 1 : -1];
 typedef char verify_input_keyboard_handle_offset[
-	offsetof(struct input_globals, keyboard_handle) == 0x234 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_globals, keyboard_handle) == 0x234)) ? 1 : -1];
 typedef char verify_input_key_ticks_offset[
-	offsetof(struct input_globals, key_ticks) == 0x238 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_globals, key_ticks) == 0x238)) ? 1 : -1];
 typedef char verify_input_key_latches_offset[
-	offsetof(struct input_globals, key_latches) == 0x2A0 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_globals, key_latches) == 0x2A0)) ? 1 : -1];
 typedef char verify_input_buffered_key_read_index_offset[
-	offsetof(struct input_globals, buffered_key_read_index) == 0x308 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_globals, buffered_key_read_index) == 0x308)) ? 1 : -1];
 typedef char verify_input_buffered_key_write_index_offset[
-	offsetof(struct input_globals, buffered_key_write_index) == 0x30A ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_globals, buffered_key_write_index) == 0x30A)) ? 1 : -1];
 typedef char verify_input_buffered_keys_offset[
-	offsetof(struct input_globals, buffered_keys) == 0x30C ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_globals, buffered_keys) == 0x30C)) ? 1 : -1];
 typedef char verify_input_globals_size[
-	sizeof(struct input_globals) == 0x40C ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (sizeof(struct input_globals) == 0x40C)) ? 1 : -1];
 
 /* ---------- prototypes */
 

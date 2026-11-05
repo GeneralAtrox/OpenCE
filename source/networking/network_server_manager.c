@@ -2632,8 +2632,9 @@ void network_game_server_handle_client_update_packet(
 		struct player_action actions[MAXIMUM_PLAYERS_PER_MACHINE] = { 0 };
 		long player_index;
 
+		/* port: (the message carries four players' actions: 0x80 bytes) */
 		for (player_index = 0;
-			player_index < message_packet->player_count;
+			player_index < message_packet->player_count && player_index < 4;
 			player_index++)
 		{
 			actions[player_index] = message_packet->actions[player_index];

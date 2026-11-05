@@ -420,21 +420,21 @@ typedef char hud_messaging_datum_custom_message_offset_assert[
 typedef char hud_messaging_datum_size_assert[
 	sizeof(struct hud_messaging_datum_definition) == 0x460 ? 1 : -1];
 typedef char hud_messaging_globals_size_assert[
-	sizeof(struct hud_messaging_globals_definition) == 0x11A8 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (sizeof(struct hud_messaging_globals_definition) == 0x11A8)) ? 1 : -1];
 typedef char hud_messaging_flash_start_time_offset_assert[
-	offsetof(struct hud_messaging_globals_definition, flash_start_time) == 0x1180 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct hud_messaging_globals_definition, flash_start_time) == 0x1180)) ? 1 : -1];
 typedef char hud_messaging_use_flash_offset_assert[
-	offsetof(struct hud_messaging_globals_definition, use_flash) == 0x1184 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct hud_messaging_globals_definition, use_flash) == 0x1184)) ? 1 : -1];
 typedef char hud_messaging_magic_number_offset_assert[
-	offsetof(struct hud_messaging_globals_definition, magic_number) == 0x1185 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct hud_messaging_globals_definition, magic_number) == 0x1185)) ? 1 : -1];
 typedef char hud_messaging_help_message_offset_assert[
-	offsetof(struct hud_messaging_globals_definition, help_message) == 0x118C ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct hud_messaging_globals_definition, help_message) == 0x118C)) ? 1 : -1];
 typedef char hud_messaging_timer_offset_assert[
-	offsetof(struct hud_messaging_globals_definition, timer) == 0x1198 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct hud_messaging_globals_definition, timer) == 0x1198)) ? 1 : -1];
 typedef char hud_messaging_timer_flash_cutoff_offset_assert[
-	offsetof(struct hud_messaging_globals_definition, timer.flash_cutoff) == 0x119E ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct hud_messaging_globals_definition, timer.flash_cutoff) == 0x119E)) ? 1 : -1];
 typedef char hud_messaging_timer_enabled_offset_assert[
-	offsetof(struct hud_messaging_globals_definition, timer.enabled) == 0x11A7 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct hud_messaging_globals_definition, timer.enabled) == 0x11A7)) ? 1 : -1];
 typedef char hud_messaging_parameters_size_assert[
 	sizeof(struct hud_messaging_parameters_definition) == 0x120 ? 1 : -1];
 typedef char hud_messaging_single_player_font_index_offset_assert[

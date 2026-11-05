@@ -681,7 +681,7 @@ struct _screenshot_and_framerate_globals
 #pragma pack(pop)
 
 typedef char screenshot_and_framerate_globals_size_assert[
-	sizeof(struct _screenshot_and_framerate_globals) == 0x38B ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (sizeof(struct _screenshot_and_framerate_globals) == 0x38B)) ? 1 : -1];
 
 void network_test_update(boolean main_menu_loaded, real seconds);
 #include "server_director.h" /* port: port/linux/game/server_director.c */

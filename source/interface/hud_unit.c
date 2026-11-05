@@ -146,9 +146,9 @@ typedef char unit_hud_state_last_sound_handles_offset_assert[
 typedef char unit_hud_state_size_assert[
 	sizeof(struct unit_hud_state) == 0x58 ? 1 : -1];
 typedef char unit_hud_globals_script_flags_offset_assert[
-	offsetof(struct unit_hud_globals, script_flags) == 0x160 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct unit_hud_globals, script_flags) == 0x160)) ? 1 : -1];
 typedef char unit_hud_globals_size_assert[
-	sizeof(struct unit_hud_globals) == 0x164 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (sizeof(struct unit_hud_globals) == 0x164)) ? 1 : -1];
 typedef char hud_scripted_globals_size_assert[
 	sizeof(struct hud_scripted_globals_definition) == 0x4 ? 1 : -1];
 typedef char hud_messaging_parameters_definition_size_assert[

@@ -210,7 +210,7 @@ typedef char player_profile_size_assert[
 typedef char player_ui_edit_profile_size_assert[
 	sizeof(struct player_ui_edit_profile) == 0xD0 ? 1 : -1];
 typedef char player_ui_globals_size_assert[
-	sizeof(struct player_ui_globals) == 0x230 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (sizeof(struct player_ui_globals) == 0x230)) ? 1 : -1];
 
 /* ---------- prototypes */
 

@@ -785,7 +785,7 @@ typedef char verify_game_engine_globals_postgame_state_offset[
 typedef char verify_game_engine_globals_hud_message_timers_offset[
 	offsetof(struct game_engine_globals, hud_message_timers) == 0x14 ? 1 : -1];
 typedef char verify_game_engine_globals_size[
-	sizeof(struct game_engine_globals) == 0x24 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (sizeof(struct game_engine_globals) == 0x24)) ? 1 : -1];
 typedef char verify_game_engine_stage_variant_offset[
 	offsetof(struct game_engine_stage, variant) == 0x40 ? 1 : -1];
 typedef char verify_game_engine_stage_size[

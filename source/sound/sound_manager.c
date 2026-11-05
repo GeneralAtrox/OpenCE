@@ -561,7 +561,7 @@ typedef char verify_looping_sound_datum_size[
 	sizeof(struct looping_sound_datum) == 0xE4 ? 1 : -1];
 
 typedef char verify_sound_manager_globals_size[
-	sizeof(struct sound_manager_globals) == 0x178 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (sizeof(struct sound_manager_globals) == 0x178)) ? 1 : -1];
 typedef char verify_sound_platform_definition_size[
 	sizeof(struct sound_platform_definition) == 0x3C ? 1 : -1];
 typedef char verify_sound_platform_dispose_offset[
@@ -577,9 +577,9 @@ typedef char verify_sound_manager_dialog_time_offset[
 typedef char verify_sound_manager_listeners_offset[
 	offsetof(struct sound_manager_globals, listeners) == 0x18 ? 1 : -1];
 typedef char verify_sound_manager_environment_offset[
-	offsetof(struct sound_manager_globals, sound_environment) == 0x128 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct sound_manager_globals, sound_environment) == 0x128)) ? 1 : -1];
 typedef char verify_sound_manager_channel_count_offset[
-	offsetof(struct sound_manager_globals, channel_count) == 0x174 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct sound_manager_globals, channel_count) == 0x174)) ? 1 : -1];
 
 /* ---------- prototypes */
 

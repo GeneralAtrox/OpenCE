@@ -19,6 +19,10 @@ a finishing place in 7 bits.
 /* ---------- session limits */
 
 #define HALO_PORT_MAXIMUM_NETWORK_PLAYERS 128
+/* port: the local (split screen) players of one machine: the Xbox's 4, 16
+here (MAXIMUM_LOCAL_PLAYERS, MAXIMUM_WINDOWS, MAXIMUM_GAMEPADS). The
+decompilation's checks of the Xbox's structures' sizes hold with 4 only */
+#define HALO_PORT_LOCAL_PLAYERS 16
 #define HALO_PORT_MAXIMUM_NETWORK_MACHINES 128
 
 /* a host polls its listening socket and one socket per machine; the Xbox's

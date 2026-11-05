@@ -140,7 +140,7 @@ struct player_action_collection
 };
 
 typedef char network_player_action_collection_size_assert[
-	sizeof(struct player_action_collection) == 0x80 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (sizeof(struct player_action_collection) == 0x80)) ? 1 : -1];
 
 #pragma pack(push, 2)
 struct player_action_collection_definition
@@ -619,8 +619,10 @@ boolean network_game_client_end_frame(
 			message.update_number = network_game_client_get_next_update_number(
 				global_network_game_client) & 0x7FFFFFFF;
 
-			csmemcpy(message.update, &update, sizeof(update));
-			message.local_player_count = local_player_count();
+			/* port: (the first four players' actions: the message's 0x80 bytes,
+			as on the Xbox, whatever the local players' count) */
+			csmemcpy(message.update, &update, sizeof(message.update));
+			message.local_player_count = MIN(local_player_count(), 4);
 			encoded_message = create_network_game_message(
 				_message_client_game_update,
 				&message,

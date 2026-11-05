@@ -1169,59 +1169,59 @@ struct ui_widget_bss_prefix
 };
 
 typedef char verify_ui_widget_fade_to_black_offset[
-	offsetof(
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(
 		struct ui_widget_runtime_globals_prefix,
-		fade_to_black) == 0x2C ? 1 : -1];
+		fade_to_black) == 0x2C)) ? 1 : -1];
 typedef char verify_ui_widget_pause_disabled_ticks_offset[
-	offsetof(
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(
 		struct ui_widget_runtime_globals_prefix,
-		pause_disabled_ticks) == 0x24 ? 1 : -1];
+		pause_disabled_ticks) == 0x24)) ? 1 : -1];
 typedef char verify_ui_widget_main_menu_deferred_error_code_offset[
-	offsetof(
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(
 		struct ui_widget_runtime_globals_prefix,
-		main_menu_deferred_error_code) == 0x28 ? 1 : -1];
+		main_menu_deferred_error_code) == 0x28)) ? 1 : -1];
 typedef char verify_ui_widget_deferred_dashboard_error_code_offset[
-	offsetof(
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(
 		struct ui_widget_runtime_globals_prefix,
-		deferred_dashboard_error_code) == 0x48 ? 1 : -1];
+		deferred_dashboard_error_code) == 0x48)) ? 1 : -1];
 typedef char verify_ui_widget_deferred_dashboard_optional_offset[
-	offsetof(
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(
 		struct ui_widget_runtime_globals_prefix,
-		deferred_dashboard_optional) == 0x4A ? 1 : -1];
+		deferred_dashboard_optional) == 0x4A)) ? 1 : -1];
 typedef char verify_ui_widget_initialization_thread_offset[
-	offsetof(
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(
 		struct ui_widget_runtime_globals_prefix,
-		initialization_thread) == 0x5C ? 1 : -1];
+		initialization_thread) == 0x5C)) ? 1 : -1];
 typedef char verify_ui_widget_initialized_offset[
-	offsetof(
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(
 		struct ui_widget_runtime_globals_prefix,
-		initialized) == 0x62 ? 1 : -1];
+		initialized) == 0x62)) ? 1 : -1];
 typedef char verify_ui_widget_debug_show_path_offset[
-	offsetof(
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(
 		struct ui_widget_runtime_globals_prefix,
-		debug_show_path) == 0x64 ? 1 : -1];
+		debug_show_path) == 0x64)) ? 1 : -1];
 typedef char verify_ui_widget_processing_inhibited_offset[
-	offsetof(
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(
 		struct ui_widget_runtime_globals_prefix,
-		processing_inhibited) == 0x65 ? 1 : -1];
+		processing_inhibited) == 0x65)) ? 1 : -1];
 typedef char verify_ui_widget_main_menu_music_active_offset[
-	offsetof(
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(
 		struct ui_widget_runtime_globals_prefix,
-		main_menu_music_active) == 0x66 ? 1 : -1];
+		main_menu_music_active) == 0x66)) ? 1 : -1];
 typedef char verify_ui_widget_runtime_globals_prefix_size[
-	sizeof(struct ui_widget_runtime_globals_prefix) == 0x68 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (sizeof(struct ui_widget_runtime_globals_prefix) == 0x68)) ? 1 : -1];
 typedef char verify_ui_widget_globals_offset[
 	offsetof(
 		struct ui_widget_bss_prefix,
 		widget_globals) == 0x800 ? 1 : -1];
 typedef char verify_ui_widget_main_menu_active_offset[
-	offsetof(
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(
 		struct ui_widget_bss_prefix,
-		we_are_at_the_main_menu) == 0x868 ? 1 : -1];
+		we_are_at_the_main_menu) == 0x868)) ? 1 : -1];
 typedef char verify_ui_widget_dpad_event_times_offset[
-	offsetof(
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(
 		struct ui_widget_bss_prefix,
-		dpad_event_times) == 0x870 ? 1 : -1];
+		dpad_event_times) == 0x870)) ? 1 : -1];
 
 struct widget_animation_data
 {

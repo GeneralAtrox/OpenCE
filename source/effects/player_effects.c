@@ -242,17 +242,17 @@ typedef char player_effect_datum_continuous_offset_assert[
 typedef char player_effect_damage_indicator_ticks_offset_assert[
 	offsetof(struct player_effect_datum, damage_indicator_ticks) == 0xE4 ? 1 : -1];
 typedef char player_effect_globals_size_assert[
-	sizeof(struct player_effect_globals_definition) == 0x3EC ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (sizeof(struct player_effect_globals_definition) == 0x3EC)) ? 1 : -1];
 typedef char player_effect_globals_screen_fade_offset_assert[
-	offsetof(struct player_effect_globals_definition, screen_fade) == 0x3B0 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct player_effect_globals_definition, screen_fade) == 0x3B0)) ? 1 : -1];
 typedef char player_effect_globals_scripted_effect_offset_assert[
-	offsetof(struct player_effect_globals_definition, scripted_effect) == 0x3C4 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct player_effect_globals_definition, scripted_effect) == 0x3C4)) ? 1 : -1];
 typedef char scripted_player_effect_definition_size_assert[
 	sizeof(struct scripted_player_effect_definition) == 0x20 ? 1 : -1];
 typedef char player_effect_globals_global_flags_offset_assert[
-	offsetof(struct player_effect_globals_definition, global_flags) == 0x3E4 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct player_effect_globals_definition, global_flags) == 0x3E4)) ? 1 : -1];
 typedef char player_effect_globals_reference_time_offset_assert[
-	offsetof(struct player_effect_globals_definition, reference_time) == 0x3E8 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct player_effect_globals_definition, reference_time) == 0x3E8)) ? 1 : -1];
 
 /* ---------- prototypes */
 

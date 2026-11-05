@@ -357,9 +357,9 @@ typedef char crosshair_state_size_assert[
 typedef char crosshair_hud_state_size_assert[
 	sizeof(struct crosshair_hud_state) == 0x50 ? 1 : -1];
 typedef char weapon_hud_globals_script_flags_offset_assert[
-	offsetof(struct weapon_hud_globals, script_flags) == 0x1E0 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct weapon_hud_globals, script_flags) == 0x1E0)) ? 1 : -1];
 typedef char weapon_hud_globals_size_assert[
-	sizeof(struct weapon_hud_globals) == 0x1E4 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (sizeof(struct weapon_hud_globals) == 0x1E4)) ? 1 : -1];
 typedef char weapon_interface_state_size_assert[
 	sizeof(struct weapon_interface_state) == 0x20 ? 1 : -1];
 typedef char number_hud_element_definition_size_assert[

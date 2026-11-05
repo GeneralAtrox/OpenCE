@@ -151,17 +151,17 @@ struct input_abstraction_runtime_globals
 typedef char verify_game_input_state_size[
 	sizeof(struct game_input_state) == 0x1C ? 1 : -1];
 typedef char verify_input_abstraction_input_states_offset[
-	offsetof(struct input_abstraction_runtime_globals, input_states) == 0x60 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_abstraction_runtime_globals, input_states) == 0x60)) ? 1 : -1];
 typedef char verify_input_abstraction_device_timer_offset[
-	offsetof(struct input_abstraction_runtime_globals, device_enumeration_startup_timer) == 0xD0 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_abstraction_runtime_globals, device_enumeration_startup_timer) == 0xD0)) ? 1 : -1];
 typedef char verify_input_abstraction_controller_available_offset[
-	offsetof(struct input_abstraction_runtime_globals, controller_available) == 0xD4 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_abstraction_runtime_globals, controller_available) == 0xD4)) ? 1 : -1];
 typedef char verify_input_abstraction_initialized_offset[
-	offsetof(struct input_abstraction_runtime_globals, initialized) == 0xD8 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_abstraction_runtime_globals, initialized) == 0xD8)) ? 1 : -1];
 typedef char verify_input_abstraction_first_insertion_offset[
-	offsetof(struct input_abstraction_runtime_globals, time_of_first_device_insertion) == 0xDC ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (offsetof(struct input_abstraction_runtime_globals, time_of_first_device_insertion) == 0xDC)) ? 1 : -1];
 typedef char verify_input_abstraction_runtime_globals_size[
-	sizeof(struct input_abstraction_runtime_globals) == 0xE0 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (sizeof(struct input_abstraction_runtime_globals) == 0xE0)) ? 1 : -1];
 
 /* ---------- prototypes */
 

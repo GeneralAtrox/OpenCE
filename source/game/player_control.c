@@ -339,7 +339,7 @@ struct player_control_globals_data
 };
 
 typedef char player_control_globals_size_assert[
-	sizeof(struct player_control_globals_data) == 0x110 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || (sizeof(struct player_control_globals_data) == 0x110)) ? 1 : -1];
 typedef char player_control_globals_players_offset_assert[
 	offsetof(struct player_control_globals_data, players) == 0x10 ? 1 : -1];
 typedef char player_control_globals_action_test_flags_offset_assert[
