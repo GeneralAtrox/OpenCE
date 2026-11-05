@@ -243,7 +243,8 @@ static struct
 	unsigned long original_instances;
 	long original_count;
 	long original_size;
-	/* the copies' absolute indices */
+	/* the tag table the copies were added to, and their absolute indices */
+	struct skin_instance *instances;
 	long first_index;
 	long count;
 	/* the copied models' buffers */
@@ -1434,6 +1435,7 @@ boolean skin_tags_import(
 		skin_tags_globals.original_instances = header->instances;
 		skin_tags_globals.original_count = header->tag_count;
 		skin_tags_globals.original_size = *tag_data_size;
+		skin_tags_globals.instances = instances;
 		skin_tags_globals.first_index = import->map_count;
 		skin_tags_globals.count = import->order_count;
 		skin_tags_globals.vertex_headers = import->vertex_headers;
@@ -1542,7 +1544,7 @@ void skin_tags_loaded(
 
 		for (index = 0; player_unit && index < skin_tags_globals.count; index++)
 		{
-			struct cache_file_tag_instance *instance = &global_tag_instances[skin_tags_globals.first_index + index];
+			struct skin_instance const *instance = &skin_tags_globals.instances[skin_tags_globals.first_index + index];
 
 			if (instance->group_tag == 'bipd')
 			{
