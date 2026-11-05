@@ -637,6 +637,9 @@ reached, and (map_data) a saved game on the level */
 
 /* (an index whose profile reads: saved_game_files.c's) */
 #define PROFILE_VALID_BIT 0x80000000UL
+/* (saved_game_files.c's _saved_game_file_index_read_only_bit: the game's
+default profiles) */
+#define PROFILE_READ_ONLY_BIT 0x40000000UL
 
 struct campaign_level
 {
@@ -6811,8 +6814,10 @@ static boolean join4_profile_free(short controller, long profile)
 static boolean join4_set(short controller, unsigned char state);
 
 /* port: the quarter's spinner shows the profiles its player may pick: those
-that read, that no other player plays or selected (on keep, if it is one):
-the one it is on, NONE when there are none */
+that read, but not the game's read-only defaults (nameless: "1wide plyr prof
+set for game" refuses them, player_name_valid), and that no other player
+plays or selected (on keep, if it is one): the one it is on, NONE when there
+are none */
 static long join4_profiles_show(struct widget_instance *quarter, short controller, long keep)
 {
 	long shown[JOIN4_PROFILES];
@@ -6824,7 +6829,8 @@ static long join4_profiles_show(struct widget_instance *quarter, short controlle
 	{
 		long profile = join4.profiles[controller][index];
 
-		if (profile != NONE && ((unsigned long)profile & PROFILE_VALID_BIT) && !join4_profile_taken(controller, profile))
+		if (profile != NONE && ((unsigned long)profile & PROFILE_VALID_BIT) &&
+			!((unsigned long)profile & PROFILE_READ_ONLY_BIT) && !join4_profile_taken(controller, profile))
 			shown[count++] = profile;
 	}
 	join4.shown[controller] = count;
@@ -6876,30 +6882,8 @@ static boolean join4_choosing(struct widget_instance *quarter)
 	profile = ui_widget_port_spinner_first_available(quarter, join4_profile_free);
 	if (controller < JOIN4_QUARTERS)
 	{
-		short index, other;
-
 		platform_log("menus: player %d chooses a profile: %d of %d shown%s", controller + 1, join4.shown[controller],
 			join4.profile_count[controller], profile == NONE ? ", none free" : "");
-		/* JOINDEBUG */
-		for (other = 0; other < 4; other++)
-			platform_log("menus: JOINDEBUG player %d active %08lx state %d playing %d", other + 1,
-				(unsigned long)player_ui_get_active_player_profile_index(other), join4.state[other],
-				lobby_controller_playing(other));
-		for (index = 0; index < join4.profile_count[controller]; index++)
-		{
-			struct player_profile debug_profile;
-			char debug_name[64];
-			short c;
-
-			memset(&debug_profile, 0, sizeof(debug_profile));
-			player_profile_get(join4.profiles[controller][index], &debug_profile);
-			for (c = 0; c < 63 && debug_profile.player_name[c]; c++)
-				debug_name[c] = (char)debug_profile.player_name[c];
-			debug_name[c] = 0;
-			platform_log("menus: JOINDEBUG profile %08lx \"%s\" taken %d", (unsigned long)join4.profiles[controller][index],
-				debug_name, join4_profile_taken(controller, join4.profiles[controller][index]));
-		}
-		platform_log("menus: JOINDEBUG first %08lx", (unsigned long)profile);
 	}
 	if (profile == NONE)
 		profile = join4_profile_new(quarter, controller);
@@ -6945,14 +6929,9 @@ static boolean join4_select(struct widget_instance *widget, struct event_record 
 		return FALSE;
 	}
 	if (!game_function("1wide plyr prof set for game", widget, event, widget_deleted))
-	{
-		platform_log("menus: JOINDEBUG player %d's profile could not be set", controller + 1);
 		return FALSE;
-	}
 	if (join4_profile_taken(controller, player_ui_get_active_player_profile_index(controller)))
 	{
-		platform_log("menus: JOINDEBUG player %d's profile %08lx is taken", controller + 1,
-			(unsigned long)player_ui_get_active_player_profile_index(controller));
 		join4_notice(L"Another player has that profile.");
 		ui_play_audio_feedback_sound(SOUND_ERROR);
 		return FALSE;
