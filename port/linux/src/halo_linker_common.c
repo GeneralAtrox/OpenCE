@@ -17,6 +17,7 @@ missing from the reconstruction.
 */
 
 #include "platform.h"
+#include "halo_port_limits.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -103,7 +104,9 @@ HALO_COMMON(effect_data, 4); /* struct data_array *effect_data */
 HALO_COMMON(effect_location_data, 4); /* struct data_array *effect_location_data */
 HALO_COMMON(error_globals, 2080); /* struct error_global_data error_globals */
 HALO_COMMON(first_object_type_definition, 4); /* struct object_type_definition *first_object_type_definition */
-HALO_COMMON(game_engine_globals, 36); /* struct game_engine_globals game_engine_globals */
+/* port: its hud_message_timers are one for each local player (game_engine.c
+checks the size) */
+HALO_COMMON(game_engine_globals, 0x14 + 4 * HALO_PORT_LOCAL_PLAYERS); /* struct game_engine_globals game_engine_globals */
 HALO_COMMON(game_variant_global, 112); /* struct game_variant game_variant_global */
 HALO_COMMON(global_address, 12); /* XNADDR global_address */
 HALO_COMMON(global_ai_debug_string_position, 4); /* short global_ai_debug_string_position */

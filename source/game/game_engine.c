@@ -786,6 +786,9 @@ typedef char verify_game_engine_globals_hud_message_timers_offset[
 	offsetof(struct game_engine_globals, hud_message_timers) == 0x14 ? 1 : -1];
 typedef char verify_game_engine_globals_size[
 	(HALO_PORT_LOCAL_PLAYERS != 4 || (sizeof(struct game_engine_globals) == 0x24)) ? 1 : -1];
+/* port: the storage halo_linker_common.c gives it */
+typedef char game_engine_globals_common_size_check[
+	sizeof(struct game_engine_globals) == 0x14 + 4 * HALO_PORT_LOCAL_PLAYERS ? 1 : -1];
 typedef char verify_game_engine_stage_variant_offset[
 	offsetof(struct game_engine_stage, variant) == 0x40 ? 1 : -1];
 typedef char verify_game_engine_stage_size[
