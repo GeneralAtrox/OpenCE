@@ -866,6 +866,18 @@ short cache_file_read(
 
 		return request_index;
 	}
+	/* port: so are the bitmap pixels and sound samples of the skins' tags,
+	added from The Maw's, from the skins' cache file (port/linux/game/skin_tags.c) */
+	{
+		extern boolean skin_tags_read(long tag_index, long offset, long size, void *buffer);
+
+		if (buffer && completion_flag_reference && skin_tags_read(tag_index, offset, size, buffer))
+		{
+			*completion_flag_reference = TRUE;
+
+			return request_index;
+		}
+	}
 	match_assert(
 		"c:\\halo\\SOURCE\\cache\\cache_files_windows.c",
 		269,

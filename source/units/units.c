@@ -8202,6 +8202,14 @@ static boolean unit_set_or_test_seat_and_weapon_label(
 	struct animation_graph *animation_graph = animation_graph_definition_get(unit_definition->object.animation_graph.index);
 	boolean result = FALSE;
 
+	/* port: a player's body of a campaign character holds a weapon it has
+	no animations for as one it has (port/linux/game/player_skins.c) */
+	{
+		extern char const *player_skins_weapon_label(long definition_index, char const *weapon_label);
+
+		weapon_label = player_skins_weapon_label(unit->definition_index, weapon_label);
+	}
+
 	for (seat_index = 0; seat_index<animation_graph->unit_seats.count; ++seat_index)
 	{
 		struct animation_graph_unit_seat *unit_seat = TAG_BLOCK_GET_ELEMENT(&animation_graph->unit_seats, seat_index, struct animation_graph_unit_seat);

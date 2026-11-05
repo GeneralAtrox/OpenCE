@@ -2691,6 +2691,13 @@ boolean network_game_server_add_player_to_game(
 
 		if (player->primary_color_index == NONE)
 			get_unique_random_color(server, player);
+		/* port: a body the host knows, else the Master Chief's
+		(port/linux/game/player_skins.c) */
+		{
+			extern short player_skins_valid(short skin);
+
+			player->icon_index = player_skins_valid(player->icon_index);
+		}
 
 		/* (the host chooses the player's slot, which is its datum on every
 		machine: network_game_add_player) */

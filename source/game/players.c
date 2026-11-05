@@ -1457,6 +1457,13 @@ static void player_spawn(
 				{
 					unit_definition_index = player_information->player_unit.index;
 				}
+				/* port: the body the player chose, where the map has it
+				(port/linux/game/player_skins.c) */
+				{
+					extern long player_skins_unit_definition(long player_index, long default_definition_index);
+
+					unit_definition_index = player_skins_unit_definition(player_index, unit_definition_index);
+				}
 
 				object_placement_data_new(
 					&placement_data,
@@ -1470,6 +1477,13 @@ static void player_spawn(
 				change_color = *game_engine_player_get_change_color(
 					&change_color_storage,
 					player_index);
+				/* port: an Elite's rank's armor, in a game without teams
+				(port/linux/game/player_skins.c) */
+				{
+					extern void player_skins_change_color(long player_index, real_rgb_color *change_color);
+
+					player_skins_change_color(player_index, &change_color);
+				}
 				placement_data_set_change_color(
 					&placement_data,
 					&change_color);

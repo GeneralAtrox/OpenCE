@@ -395,6 +395,27 @@ _network["categories"] = [
     ("DISCORD ACCOUNT:", "network_setup/discord_account",
      "Link a Discord account, which lets you join\nservers that block VPNs while you use one."),
 ]
+# (the body each local player plays as in multiplayer and co-op: port/linux/
+# game/player_skins.c; players 1 to 8 on one screen, 9 to 16 on the next,
+# which its last place opens)
+SKINS = [("MASTER CHIEF", "chief"), ("ELITE", "elite"), ("ELITE MINOR", "elite_minor"),
+         ("ELITE MAJOR", "elite_major"), ("ELITE SPEC OPS", "elite_spec_ops"), ("ELITE ZEALOT", "elite_zealot"),
+         ("STEALTH ELITE", "elite_stealth"), ("FLOOD HUMAN", "flood_human"), ("FLOOD ELITE", "flood_elite"),
+         ("HUNTER", "hunter")]
+SKIN_HELP = "Player {}'s body in multiplayer and co-op. A co-op\nlevel has only its own; else the Master Chief."
+_network["categories"].append(
+    ("PLAYER SKINS:", "network_setup/player_skins",
+     "Play as the Master Chief, an Elite, the Flood or\na Hunter in multiplayer, each local player."))
+SCREENS["network_setup/player_skins"] = {
+    "screen": "player_skins_settings_screen", "header": _network["header"], "spacing": 30,
+    "rows": [(f"PLAYER {n}:", f"multiplayer.skin_{n}", SKINS, SKIN_HELP.format(n), None) for n in range(1, 9)],
+    "categories": [("PLAYERS 9-16:", "network_setup/player_skins_more",
+                    "The bodies of local players 9 to 16, in split\nscreen.")],
+}
+SCREENS["network_setup/player_skins_more"] = {
+    "screen": "player_skins_more_settings_screen", "header": _network["header"], "spacing": 30,
+    "rows": [(f"PLAYER {n}:", f"multiplayer.skin_{n}", SKINS, SKIN_HELP.format(n), None) for n in range(9, 17)],
+}
 SCREENS["network_setup/map_sharing"] = {
     "screen": "map_sharing_settings_screen", "header": _network["header"], "spacing": 30,
     "rows": [
@@ -509,7 +530,8 @@ SCREENS["network_setup/streamer_mode"] = {
 SCREENS["network_setup/in_game"] = {
     "screen": "in_game_network_settings_screen", "header": _network["header"], "spacing": 30,
     "platform_places": True, "rows": [],
-    "categories": [category for category in _network["categories"] if category[1] != "network_setup/server_browser"],
+    "categories": [category for category in _network["categories"]
+                   if category[1] not in ("network_setup/server_browser", "network_setup/player_skins")],
 }
 
 # Controls Setup: the keyboard and mouse's actions, in groups (the order of

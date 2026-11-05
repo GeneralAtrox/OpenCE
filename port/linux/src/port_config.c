@@ -570,6 +570,46 @@ static const struct config_setting config_settings[] =
 		"shield's own) or a multiplayer armor color: white, black, red, blue,\n"
 		"gray, yellow, green, pink, purple, cyan, cobalt, orange, teal, sage,\n"
 		"brown, tan, maroon or salmon." },
+	/* port: the body each local player plays as (port/linux/game/player_skins.c) */
+	{ "multiplayer.skin_1", _config_string, "\"chief\"", "HALO_SKIN_1", _environment_value, _platform_all,
+		"The body local player 1 plays as in multiplayer and network co-op:\n"
+		"\"chief\" (the Master Chief, in the armor color), an Elite (\"elite\" in\n"
+		"the armor color, or by rank: \"elite_minor\", \"elite_major\",\n"
+		"\"elite_spec_ops\", \"elite_zealot\", \"elite_stealth\"), a Flood combat form\n"
+		"(\"flood_human\", \"flood_elite\") or \"hunter\". A stock multiplayer map has\n"
+		"them all from The Maw's tags (c40.map); a co-op level only its own; a\n"
+		"map without the body plays the Master Chief. multiplayer.skin_2 to\n"
+		"skin_16 are the other local players' (split screen)." },
+	{ "multiplayer.skin_2", _config_string, "\"chief\"", "HALO_SKIN_2", _environment_value, _platform_all,
+		"The body local player 2 plays as (multiplayer.skin_1 has the choices)." },
+	{ "multiplayer.skin_3", _config_string, "\"chief\"", "HALO_SKIN_3", _environment_value, _platform_all,
+		"The body local player 3 plays as (multiplayer.skin_1 has the choices)." },
+	{ "multiplayer.skin_4", _config_string, "\"chief\"", "HALO_SKIN_4", _environment_value, _platform_all,
+		"The body local player 4 plays as (multiplayer.skin_1 has the choices)." },
+	{ "multiplayer.skin_5", _config_string, "\"chief\"", "HALO_SKIN_5", _environment_value, _platform_all,
+		"The body local player 5 plays as (multiplayer.skin_1 has the choices)." },
+	{ "multiplayer.skin_6", _config_string, "\"chief\"", "HALO_SKIN_6", _environment_value, _platform_all,
+		"The body local player 6 plays as (multiplayer.skin_1 has the choices)." },
+	{ "multiplayer.skin_7", _config_string, "\"chief\"", "HALO_SKIN_7", _environment_value, _platform_all,
+		"The body local player 7 plays as (multiplayer.skin_1 has the choices)." },
+	{ "multiplayer.skin_8", _config_string, "\"chief\"", "HALO_SKIN_8", _environment_value, _platform_all,
+		"The body local player 8 plays as (multiplayer.skin_1 has the choices)." },
+	{ "multiplayer.skin_9", _config_string, "\"chief\"", "HALO_SKIN_9", _environment_value, _platform_all,
+		"The body local player 9 plays as (multiplayer.skin_1 has the choices)." },
+	{ "multiplayer.skin_10", _config_string, "\"chief\"", "HALO_SKIN_10", _environment_value, _platform_all,
+		"The body local player 10 plays as (multiplayer.skin_1 has the choices)." },
+	{ "multiplayer.skin_11", _config_string, "\"chief\"", "HALO_SKIN_11", _environment_value, _platform_all,
+		"The body local player 11 plays as (multiplayer.skin_1 has the choices)." },
+	{ "multiplayer.skin_12", _config_string, "\"chief\"", "HALO_SKIN_12", _environment_value, _platform_all,
+		"The body local player 12 plays as (multiplayer.skin_1 has the choices)." },
+	{ "multiplayer.skin_13", _config_string, "\"chief\"", "HALO_SKIN_13", _environment_value, _platform_all,
+		"The body local player 13 plays as (multiplayer.skin_1 has the choices)." },
+	{ "multiplayer.skin_14", _config_string, "\"chief\"", "HALO_SKIN_14", _environment_value, _platform_all,
+		"The body local player 14 plays as (multiplayer.skin_1 has the choices)." },
+	{ "multiplayer.skin_15", _config_string, "\"chief\"", "HALO_SKIN_15", _environment_value, _platform_all,
+		"The body local player 15 plays as (multiplayer.skin_1 has the choices)." },
+	{ "multiplayer.skin_16", _config_string, "\"chief\"", "HALO_SKIN_16", _environment_value, _platform_all,
+		"The body local player 16 plays as (multiplayer.skin_1 has the choices)." },
 
 	{ "game.unlock_all_levels", _config_boolean, "false", "HALO_UNLOCK_ALL_LEVELS", _environment_value, _platform_all,
 		"true: a profile made from now on starts with every campaign level\n"
@@ -2059,6 +2099,22 @@ static const struct
 	{ "display.shield_glow_intensity", { "default", "light_show", NULL }, NULL },
 	{ "display.shield_color", { "default", "white", "black", "red", "blue", "gray", "yellow", "green", "pink",
 		"purple", "cyan", "cobalt", "orange", "teal", "sage", "brown", "tan", "maroon", "salmon", NULL }, NULL },
+	{ "multiplayer.skin_1", { "chief", "elite", "elite_minor", "elite_major", "elite_spec_ops", "elite_zealot", "elite_stealth", "flood_human", "flood_elite", "hunter", NULL }, NULL },
+	{ "multiplayer.skin_2", { "chief", "elite", "elite_minor", "elite_major", "elite_spec_ops", "elite_zealot", "elite_stealth", "flood_human", "flood_elite", "hunter", NULL }, NULL },
+	{ "multiplayer.skin_3", { "chief", "elite", "elite_minor", "elite_major", "elite_spec_ops", "elite_zealot", "elite_stealth", "flood_human", "flood_elite", "hunter", NULL }, NULL },
+	{ "multiplayer.skin_4", { "chief", "elite", "elite_minor", "elite_major", "elite_spec_ops", "elite_zealot", "elite_stealth", "flood_human", "flood_elite", "hunter", NULL }, NULL },
+	{ "multiplayer.skin_5", { "chief", "elite", "elite_minor", "elite_major", "elite_spec_ops", "elite_zealot", "elite_stealth", "flood_human", "flood_elite", "hunter", NULL }, NULL },
+	{ "multiplayer.skin_6", { "chief", "elite", "elite_minor", "elite_major", "elite_spec_ops", "elite_zealot", "elite_stealth", "flood_human", "flood_elite", "hunter", NULL }, NULL },
+	{ "multiplayer.skin_7", { "chief", "elite", "elite_minor", "elite_major", "elite_spec_ops", "elite_zealot", "elite_stealth", "flood_human", "flood_elite", "hunter", NULL }, NULL },
+	{ "multiplayer.skin_8", { "chief", "elite", "elite_minor", "elite_major", "elite_spec_ops", "elite_zealot", "elite_stealth", "flood_human", "flood_elite", "hunter", NULL }, NULL },
+	{ "multiplayer.skin_9", { "chief", "elite", "elite_minor", "elite_major", "elite_spec_ops", "elite_zealot", "elite_stealth", "flood_human", "flood_elite", "hunter", NULL }, NULL },
+	{ "multiplayer.skin_10", { "chief", "elite", "elite_minor", "elite_major", "elite_spec_ops", "elite_zealot", "elite_stealth", "flood_human", "flood_elite", "hunter", NULL }, NULL },
+	{ "multiplayer.skin_11", { "chief", "elite", "elite_minor", "elite_major", "elite_spec_ops", "elite_zealot", "elite_stealth", "flood_human", "flood_elite", "hunter", NULL }, NULL },
+	{ "multiplayer.skin_12", { "chief", "elite", "elite_minor", "elite_major", "elite_spec_ops", "elite_zealot", "elite_stealth", "flood_human", "flood_elite", "hunter", NULL }, NULL },
+	{ "multiplayer.skin_13", { "chief", "elite", "elite_minor", "elite_major", "elite_spec_ops", "elite_zealot", "elite_stealth", "flood_human", "flood_elite", "hunter", NULL }, NULL },
+	{ "multiplayer.skin_14", { "chief", "elite", "elite_minor", "elite_major", "elite_spec_ops", "elite_zealot", "elite_stealth", "flood_human", "flood_elite", "hunter", NULL }, NULL },
+	{ "multiplayer.skin_15", { "chief", "elite", "elite_minor", "elite_major", "elite_spec_ops", "elite_zealot", "elite_stealth", "flood_human", "flood_elite", "hunter", NULL }, NULL },
+	{ "multiplayer.skin_16", { "chief", "elite", "elite_minor", "elite_major", "elite_spec_ops", "elite_zealot", "elite_stealth", "flood_human", "flood_elite", "hunter", NULL }, NULL },
 	{ "audio.resampler", { "sinc", "linear", NULL }, NULL },
 	{ "audio.voice_chat", { "push_to_talk", "open_mic", "off", NULL }, NULL },
 	{ "input.touch_controls", { "auto", "on", "off", NULL }, NULL },

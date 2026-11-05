@@ -329,6 +329,15 @@ game's flags also tell its clients whether the host is a dedicated server
 (`_network_game_cooperative_dedicated_bit`: its loading zones then ask for
 most of the living players).
 
+Then version 42 carries each player's body (`multiplayer.skin_<n>`:
+`port/linux/game/player_skins.c`) in the network player's `icon_index`,
+which the Xbox game sent and never used (a host takes any value it does not
+know as the Master Chief, 0), and gives a stock multiplayer map the Elites',
+the Flood's and the Hunter's tags from The Maw (`skin_tags.c`), after its
+own: the map's tags are then more, at indices a build before it does not
+have, and the objects the host makes of them (its players' bodies) name
+them by index.
+
 `port/linux/network_format.txt` records the wire format of the current
 version (`tools/network_format.py`): `test_linux_port.py` fails when the
 sources' messages, kinds, bits, structs sent whole or the sizes of their

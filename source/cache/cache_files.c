@@ -625,6 +625,15 @@ void scenario_tags_unload(
 
 		menu_tags_unloaded();
 	}
+	/* port: the skins' tags go, and their buffers (port/linux/game/skin_tags.c,
+	player_skins.c) */
+	{
+		extern void skin_tags_unloaded(void);
+		extern void player_skins_tags_unloaded(void);
+
+		player_skins_tags_unloaded();
+		skin_tags_unloaded();
+	}
 	cache_file_close();
 	/* port: a Halo Custom Edition map has no Xbox vertex or index buffers
 	(port/linux/game/custom_edition_cache.c) */
@@ -1298,15 +1307,43 @@ long scenario_tags_load(
 			anything reads it (port/linux/game/tag_validate.c): a map whose
 			tags' pointers cannot be trusted is refused; what can be
 			corrected is */
-			if (!tag_validate_tags(
-				tag_cache_base_address,
-				cache_file_globals.header.tag_data_size,
-				cache_file_globals.header.file_length,
-				scenario_name))
+			/* port: a stock multiplayer map is given the tags of the bodies its
+			players may play as, from The Maw's, after its own and checked
+			with them (port/linux/game/skin_tags.c): if they are refused, the
+			map's own are checked again alone */
 			{
-				cache_file_close();
+				extern boolean skin_tags_import(void *tag_header, long *tag_data_size, short header_type,
+					char const *map_name);
+				extern void skin_tags_import_undo(void *tag_header, long *tag_data_size);
+				extern long skin_tags_file_length(long file_length);
+				extern boolean skin_tags_imported(void);
+				boolean valid;
 
-				return NONE;
+				skin_tags_import(
+					tag_cache_base_address,
+					&cache_file_globals.header.tag_data_size,
+					*(short *)cache_file_globals.header.reserved60,
+					stripped_scenario_name);
+				valid = tag_validate_tags(
+					tag_cache_base_address,
+					cache_file_globals.header.tag_data_size,
+					skin_tags_file_length(cache_file_globals.header.file_length),
+					scenario_name);
+				if (!valid && skin_tags_imported())
+				{
+					skin_tags_import_undo(tag_cache_base_address, &cache_file_globals.header.tag_data_size);
+					valid = tag_validate_tags(
+						tag_cache_base_address,
+						cache_file_globals.header.tag_data_size,
+						cache_file_globals.header.file_length,
+						scenario_name);
+				}
+				if (!valid)
+				{
+					cache_file_close();
+
+					return NONE;
+				}
 			}
 
 			cache_file_globals.tag_header = tag_cache_base_address;
@@ -1340,6 +1377,16 @@ long scenario_tags_load(
 			}
 #endif
 			cache_file_globals.tags_loaded = TRUE;
+			/* port: the skins' tags' buffers registered as the map's are, and
+			the bodies the players may play as found (port/linux/game/skin_tags.c,
+			player_skins.c) */
+			{
+				extern void skin_tags_loaded(void);
+				extern void player_skins_tags_loaded(void);
+
+				skin_tags_loaded();
+				player_skins_tags_loaded();
+			}
 			/* port: a PAL map played as the NTSC maps are (port/linux/game/pal_tags.c) */
 			{
 				extern void pal_tags_loaded(char const *build);

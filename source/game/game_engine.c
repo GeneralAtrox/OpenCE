@@ -9193,11 +9193,20 @@ static void handle_custom_starting_equipment(
 						}
 						else
 						{
-							unit_add_weapon_to_inventory(
+							/* port: a weapon the unit cannot hold (a Hunter's body
+							holds only its own: port/linux/game/player_skins.c) is
+							not left where the player spawned */
+							if (unit_add_weapon_to_inventory(
 								unit_index,
 								weapon_index,
-								first_weapon ? 2 : 0);
-							first_weapon = FALSE;
+								first_weapon ? 2 : 0))
+							{
+								first_weapon = FALSE;
+							}
+							else
+							{
+								object_delete(weapon_index);
+							}
 						}
 					}
 				}

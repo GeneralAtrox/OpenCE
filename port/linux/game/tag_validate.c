@@ -181,6 +181,12 @@ struct tag_validation
 	long vertex_buffer_count;
 	byte *index_buffers;
 	long index_buffer_count;
+	/* the added tags' models' buffers, not in the header
+	(tag_validate_set_extra_buffers) */
+	byte *extra_vertex_buffers;
+	long extra_vertex_buffer_count;
+	byte *extra_index_buffers;
+	long extra_index_buffer_count;
 
 	long tag_index;
 	short pass;
@@ -217,6 +223,16 @@ holds */
 static unsigned long tag_validate_claims[CLAIM_WORDS];
 
 static char const tag_validate_empty_name[] = "";
+
+/* the vertex and index buffers of tags added to a map's, which are not in
+its header (skin_tags.c) */
+static struct
+{
+	byte *vertex_buffers;
+	long vertex_buffer_count;
+	byte *index_buffers;
+	long index_buffer_count;
+} tag_validate_extra_buffers;
 
 /* ---------- prototypes */
 
@@ -1586,6 +1602,20 @@ boolean tag_validate_tags(
 		tag_validate_refuse(&validation, "has a damaged tag header");
 		return FALSE;
 	}
+	/* (the added tags' buffers first, kept apart from the header's) */
+	if (tag_validate_extra_buffers.vertex_buffer_count || tag_validate_extra_buffers.index_buffer_count)
+	{
+		if (!validate_buffers(&validation, tag_validate_extra_buffers.vertex_buffers,
+			tag_validate_extra_buffers.vertex_buffer_count, tag_validate_extra_buffers.index_buffers,
+			tag_validate_extra_buffers.index_buffer_count))
+		{
+			return FALSE;
+		}
+		validation.extra_vertex_buffers = validation.vertex_buffers;
+		validation.extra_vertex_buffer_count = validation.vertex_buffer_count;
+		validation.extra_index_buffers = validation.index_buffers;
+		validation.extra_index_buffer_count = validation.index_buffer_count;
+	}
 	if (!claim(header, sizeof(*header)) ||
 		!claim(header->instances, header->tag_count * sizeof(struct tag_validate_instance)) ||
 		!validate_buffers(&validation, header->vertex_buffers, header->vertex_buffer_count,
@@ -1888,12 +1918,36 @@ void *tag_validate_vertex_buffer_data(
 	struct tag_validation *validation,
 	void const *buffer)
 {
-	return buffer_data(validation->vertex_buffers, validation->vertex_buffer_count, buffer);
+	void *data = buffer_data(validation->vertex_buffers, validation->vertex_buffer_count, buffer);
+
+	if (!data && validation->extra_vertex_buffer_count)
+		data = buffer_data(validation->extra_vertex_buffers, validation->extra_vertex_buffer_count, buffer);
+
+	return data;
 }
 
 void *tag_validate_index_buffer_data(
 	struct tag_validation *validation,
 	void const *buffer)
 {
-	return buffer_data(validation->index_buffers, validation->index_buffer_count, buffer);
+	void *data = buffer_data(validation->index_buffers, validation->index_buffer_count, buffer);
+
+	if (!data && validation->extra_index_buffer_count)
+		data = buffer_data(validation->extra_index_buffers, validation->extra_index_buffer_count, buffer);
+
+	return data;
+}
+
+void tag_validate_set_extra_buffers(
+	void *vertex_buffers,
+	long vertex_buffer_count,
+	void *index_buffers,
+	long index_buffer_count)
+{
+	tag_validate_extra_buffers.vertex_buffers = vertex_buffers;
+	tag_validate_extra_buffers.vertex_buffer_count = vertex_buffers ? vertex_buffer_count : 0;
+	tag_validate_extra_buffers.index_buffers = index_buffers;
+	tag_validate_extra_buffers.index_buffer_count = index_buffers ? index_buffer_count : 0;
+
+	return;
 }

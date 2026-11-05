@@ -1549,7 +1549,13 @@ boolean network_game_client_add_player(
 	ustrncpy(player.name, profile.player_name, NETWORK_PLAYER_NAME_LENGTH - 1);
 	player.name[NETWORK_PLAYER_NAME_LENGTH - 1] = 0;
 	player.primary_color_index = profile.primary_color_index;
-	player.icon_index = NONE;
+	/* port: the body the player chose (port/linux/game/player_skins.c), in
+	the icon index, which the Xbox game sent but never used */
+	{
+		extern short player_skins_local_choice(long local_player_index);
+
+		player.icon_index = player_skins_local_choice(local_player_index);
+	}
 	player.team_index = NONE;
 	player.player_list_index = NONE;
 
@@ -1967,6 +1973,12 @@ boolean network_game_client_update_local_player_data(
 		network_player_is_valid(player));
 
 	csmemcpy(&player_settings, player, sizeof(player_settings));
+	/* port: and the body it has chosen since (port/linux/game/player_skins.c) */
+	{
+		extern short player_skins_local_choice(long local_player_index);
+
+		player_settings.icon_index = player_skins_local_choice(player_settings.controller_index);
+	}
 
 	if (player_settings.team_index == NONE)
 		player_settings.team_index = 0;

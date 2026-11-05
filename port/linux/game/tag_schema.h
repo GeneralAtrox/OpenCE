@@ -341,6 +341,16 @@ boolean tag_validate_structure_bsp(
 	void *base,
 	long size);
 
+/* vertex and index buffers (12 bytes each, as a header's) of tags added to
+a map's after its own (skin_tags.c), which their parts use as a map's use
+its header's: the next tag_validate_tags checks them with the header's.
+NULL and 0 for none */
+void tag_validate_set_extra_buffers(
+	void *vertex_buffers,
+	long vertex_buffer_count,
+	void *index_buffers,
+	long index_buffer_count);
+
 /* how many corrections the last validation made (none for a retail map) */
 long tag_validate_corrections(
 	void);

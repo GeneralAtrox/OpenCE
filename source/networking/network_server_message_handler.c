@@ -2494,6 +2494,13 @@ static boolean network_game_server_handle_message_client_player_settings_request
 			{
 				player.team_index = game->players[player.player_list_index].team_index;
 			}
+			/* port: a body the host knows, else the Master Chief's
+			(port/linux/game/player_skins.c) */
+			{
+				extern short player_skins_valid(short skin);
+
+				player.icon_index = player_skins_valid(player.icon_index);
+			}
 			if (player.machine_index != machine_index)
 			{
 				network_event(
