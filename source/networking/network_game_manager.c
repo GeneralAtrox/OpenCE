@@ -804,10 +804,6 @@ boolean network_game_create_game_objects(
 		game_unload();
 	}
 
-	{
-		extern void platform_log(char const *format, ...);
-		platform_log("variant diag: game objects made, engine %ld", (long)game->variant.game_engine_index);
-	}
 	if (game->variant.game_engine_index)
 	{
 		game_set_game_variant(&game->variant);
