@@ -437,34 +437,49 @@ static void render_window(
 			screen (whose HUD the tags scale for split screen) and drawn
 			that much smaller into the view (halo_screen_view_scale_begin) */
 			real ui_scale = split_screen_ui_scale(&rasterizer_camera->viewport_bounds);
-			rectangle2d saved_bounds[4];
+			rectangle2d saved_bounds[6];
+			rectangle2d scaled[6];
 			short corner_x = rasterizer_camera->viewport_bounds.x0;
 			short corner_y = rasterizer_camera->viewport_bounds.y0;
-			rectangle2d *scaled_bounds[4];
+			rectangle2d *scaled_bounds[6];
 			short index;
 
+			/* (the HUD places its pieces in render's camera and draws them
+			through the rasterizer's copy, global_window_parameters': both
+			are enlarged; the screen flash, drawn unscaled, reads the copy) */
 			scaled_bounds[0] = &rasterizer_camera->viewport_bounds;
 			scaled_bounds[1] = &rasterizer_camera->window_bounds;
 			scaled_bounds[2] = &render.camera.viewport_bounds;
 			scaled_bounds[3] = &render.camera.window_bounds;
+			scaled_bounds[4] = &global_window_parameters.camera.viewport_bounds;
+			scaled_bounds[5] = &global_window_parameters.camera.window_bounds;
 			if (ui_scale < 1.0f)
 			{
-				for (index = 0; index < 4; index++)
+				for (index = 0; index < 6; index++)
 				{
 					saved_bounds[index] = *scaled_bounds[index];
-					scaled_bounds[index]->x0 = (short)(corner_x + (scaled_bounds[index]->x0 - corner_x) / ui_scale);
-					scaled_bounds[index]->x1 = (short)(corner_x + (scaled_bounds[index]->x1 - corner_x) / ui_scale);
-					scaled_bounds[index]->y0 = (short)(corner_y + (scaled_bounds[index]->y0 - corner_y) / ui_scale);
-					scaled_bounds[index]->y1 = (short)(corner_y + (scaled_bounds[index]->y1 - corner_y) / ui_scale);
+					scaled[index].x0 = (short)(corner_x + (saved_bounds[index].x0 - corner_x) / ui_scale);
+					scaled[index].x1 = (short)(corner_x + (saved_bounds[index].x1 - corner_x) / ui_scale);
+					scaled[index].y0 = (short)(corner_y + (saved_bounds[index].y0 - corner_y) / ui_scale);
+					scaled[index].y1 = (short)(corner_y + (saved_bounds[index].y1 - corner_y) / ui_scale);
+					*scaled_bounds[index] = scaled[index];
 				}
 				halo_screen_view_scale_begin(ui_scale);
 			}
 			interface_draw_screen();
 			if (ui_scale < 1.0f)
+			{
 				halo_screen_view_scale_end();
+				*scaled_bounds[4] = saved_bounds[4];
+				*scaled_bounds[5] = saved_bounds[5];
+			}
 			rasterizer_screen_flash();
 			if (ui_scale < 1.0f)
+			{
+				*scaled_bounds[4] = scaled[4];
+				*scaled_bounds[5] = scaled[5];
 				halo_screen_view_scale_begin(ui_scale);
+			}
 			/* port: the view's menus centred in it (a quarter's are 320 wide) */
 			halo_screen_ui_offset_view(rasterizer_camera->viewport_bounds.x1 - rasterizer_camera->viewport_bounds.x0);
 			render_ui_widgets(local_player_index, &rasterizer_camera->viewport_bounds);
@@ -472,7 +487,7 @@ static void render_window(
 			if (ui_scale < 1.0f)
 			{
 				halo_screen_view_scale_end();
-				for (index = 0; index < 4; index++)
+				for (index = 0; index < 6; index++)
 					*scaled_bounds[index] = saved_bounds[index];
 			}
 		}
