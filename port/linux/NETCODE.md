@@ -333,7 +333,7 @@ Then version 42 carries each player's body (`multiplayer.skin_<n>`:
 `port/linux/game/player_skins.c`) in the network player's `icon_index`,
 which the Xbox game sent and never used (a host takes any value it does not
 know as the Master Chief, 0), and gives a stock multiplayer map the Elites',
-the Flood's and the Hunter's tags from The Maw (`skin_tags.c`), after its
+the Flood's and the Hunter's tags from Two Betrayals (`skin_tags.c`), after its
 own: the map's tags are then more, at indices a build before it does not
 have, and the objects the host makes of them (its players' bodies) name
 them by index.

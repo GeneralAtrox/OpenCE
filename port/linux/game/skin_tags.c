@@ -3,9 +3,9 @@ SKIN_TAGS.C
 
 The tags of the bodies a player may play as besides the Master Chief
 (player_skins.c): the Elites', the Flood combat forms' and the Hunter's.
-Only the campaign's levels have them; The Maw (c40.map) has every one.
+Only the campaign's levels have them; Two Betrayals (c40.map) has every one.
 When a stock multiplayer map loads (scenario_tags_load), before its tags are
-checked, their tags are copied from The Maw's into the tag cache after the
+checked, their tags are copied from Two Betrayals' into the tag cache after the
 map's own, with every tag they need that the map has not got (a tag of the
 same group and name as one of the map's is the map's), and the map's tag
 table is copied after them with theirs added. The map's tag data then ends
@@ -21,16 +21,17 @@ copied model's cannot be in: they are copied to buffers of their own after
 the tags, which the check (tag_validate_set_extra_buffers) and the
 rasterizer (skin_tags_loaded) take as the map's.
 
-The bitmaps' pixels and the sounds' samples of the copied tags are in The
-Maw's file, which is compressed: what of it they need is inflated once into
-the skins' cache file (player_skins.cache in the saves' folder z, the cache drive's) with The
-Maw's tag data, and read from there (skin_tags_read). The cache file is made
-again when The Maw's checksum or this file's version (SKIN_PACK_VERSION)
+The bitmaps' pixels and the sounds' samples of the copied tags are in Two
+Betrayals' file, which is compressed: what of it they need is inflated once
+into the skins' cache file (player_skins.cache in the saves' folder z, the
+cache drive's) with Two Betrayals' tag data, and read from there
+(skin_tags_read). The cache file is made
+again when Two Betrayals' checksum or this file's version (SKIN_PACK_VERSION)
 changes.
 
 Every machine of a network game adds the same tags at the same indices,
-whatever their players chose: they are made only of the map's tags and The
-Maw's, which every Xbox disc has. A machine without The Maw adds none, and
+whatever their players chose: they are made only of the map's tags and Two
+Betrayals', which every Xbox disc has. A machine without Two Betrayals adds none, and
 plays every player as the Master Chief (a host's Elite is no biped there,
 and is not made: distributed_client_change_valid).
 */
@@ -123,7 +124,7 @@ static short const skin_vertex_type_sizes[] =
 /* ---------- structures */
 
 /* cache_files.c's cache_file_tag_instance and cache_file_tag_header, with
-addresses as numbers (The Maw's are not this process's) */
+addresses as numbers (Two Betrayals' are not this process's) */
 struct skin_instance
 {
 	unsigned long group_tag;
@@ -171,7 +172,7 @@ struct skin_model_part
 
 typedef char verify_skin_model_part_size[sizeof(struct skin_model_part) == 0x68 ? 1 : -1];
 
-/* bytes of The Maw's file, in the skins' cache file */
+/* bytes of Two Betrayals' file, in the skins' cache file */
 struct skin_range
 {
 	unsigned long offset;
@@ -192,7 +193,7 @@ struct skin_pack_header
 	long tag_data_pack_offset;
 };
 
-/* The Maw's tags, read into memory */
+/* Two Betrayals' tags, read into memory */
 struct skin_donor
 {
 	byte *data;
@@ -205,11 +206,11 @@ struct skin_donor
 struct skin_import
 {
 	struct skin_donor donor;
-	/* each of The Maw's tags (by absolute index): what its references are
+	/* each of Two Betrayals' tags (by absolute index): what its references are
 	now (REMAP_UNSEEN, REMAP_PENDING while it is gathered, NONE, the map's
 	tag's index or its copy's) */
 	long *remap;
-	/* The Maw's tags copied, in order */
+	/* Two Betrayals' tags copied, in order */
 	long order[MAXIMUM_SKIN_TAGS];
 	long order_count;
 	/* the map's tags (NULL while the skins' cache file is made: every tag
@@ -304,7 +305,7 @@ static boolean skin_group_excluded(
 	return FALSE;
 }
 
-/* size bytes of The Maw's tags at its address, or NULL if they are not all
+/* size bytes of Two Betrayals' tags at its address, or NULL if they are not all
 in them */
 static byte *donor_get(
 	struct skin_donor const *donor,
@@ -319,7 +320,7 @@ static byte *donor_get(
 	return donor->data + offset;
 }
 
-/* a string of The Maw's tags, or NULL if it does not end in them */
+/* a string of Two Betrayals' tags, or NULL if it does not end in them */
 static char const *donor_string(
 	struct skin_donor const *donor,
 	unsigned long address)
@@ -402,7 +403,7 @@ static void import_fail(
 	return;
 }
 
-/* the index a reference to one of The Maw's tags has now; while gathering,
+/* the index a reference to one of Two Betrayals' tags has now; while gathering,
 a tag not seen yet is looked up in the map, else gathered */
 static long import_reference(
 	struct skin_import *import,
@@ -579,7 +580,7 @@ static void import_part_buffers(
 	return;
 }
 
-/* a bitmap's pixels, in The Maw's file (the cache file's making) */
+/* a bitmap's pixels, in Two Betrayals' file (the cache file's making) */
 static void import_bitmap_ranges(
 	struct skin_import *import,
 	byte const *root)
@@ -606,8 +607,8 @@ static void import_names(
 	long tag_index,
 	struct tag_reference *copy);
 
-/* an element of The Maw's tags (source) and its copy (copy, or NULL while
-gathering), by its definition: every block and data of it within The Maw's
+/* an element of Two Betrayals' tags (source) and its copy (copy, or NULL while
+gathering), by its definition: every block and data of it within Two Betrayals'
 tags, its blocks' elements walked, and copied, and its references and tag
 indices the copies' */
 static void import_element(
@@ -816,7 +817,7 @@ static void import_gather(
 
 		if (root == NONE)
 		{
-			import_fail(import, "The Maw has not got a skin's biped");
+			import_fail(import, "Two Betrayals has not got a skin's biped");
 			break;
 		}
 		import_reference(import, import->donor.instances[root].tag_index);
@@ -840,7 +841,7 @@ static void import_gather(
 	return;
 }
 
-/* ---------- The Maw's file, and the skins' cache file */
+/* ---------- Two Betrayals' file, and the skins' cache file */
 
 static int range_compare(
 	void const *a,
@@ -884,7 +885,7 @@ static long ranges_merge(
 	return merged + 1;
 }
 
-/* the bytes of The Maw's file in ranges (in order, apart), written to the
+/* the bytes of Two Betrayals' file in ranges (in order, apart), written to the
 cache file at their pack offsets: inflated from its compressed body, or
 read from it if it is not compressed */
 static boolean donor_copy_ranges(
@@ -995,7 +996,7 @@ done:
 	return success;
 }
 
-/* The Maw's map file's header, from its file (raw_length bytes long) */
+/* Two Betrayals' map file's header, from its file (raw_length bytes long) */
 static boolean donor_header_read(
 	FILE *raw,
 	byte header[CACHE_HEADER_BYTES],
@@ -1024,7 +1025,7 @@ static boolean donor_header_read(
 		tag_data_offset <= file_length - tag_data_size;
 }
 
-/* The Maw's tags read (from the cache file) into donor, its header and
+/* Two Betrayals' tags read (from the cache file) into donor, its header and
 table checked */
 static boolean donor_load(
 	struct skin_donor *donor,
@@ -1067,7 +1068,7 @@ static void pack_path(
 	return;
 }
 
-/* the skins' cache file made from The Maw's file (whose header is
+/* the skins' cache file made from Two Betrayals' file (whose header is
 donor_header): its tag data, and the bytes the skins' tags read of the rest */
 static boolean pack_make(
 	FILE *raw,
@@ -1110,7 +1111,7 @@ static boolean pack_make(
 	tag_range.pack_offset = (unsigned long)header->tag_data_pack_offset;
 	if (!donor_copy_ranges(raw, raw_length, header->file_length, &tag_range, 1, pack))
 	{
-		platform_log("player skins: The Maw's tags could not be read (%ld of %ld bytes in the file)", raw_length,
+		platform_log("player skins: Two Betrayals' tags could not be read (%ld of %ld bytes in the file)", raw_length,
 			header->file_length);
 		goto done;
 	}
@@ -1122,7 +1123,7 @@ static boolean pack_make(
 	memset(import, 0, sizeof(*import));
 	if (!donor_load(&import->donor, pack, header))
 	{
-		platform_log("player skins: The Maw's tags are not a map's");
+		platform_log("player skins: Two Betrayals' tags are not a map's");
 		goto done;
 	}
 	import->remap = malloc((size_t)import->donor.count * sizeof(long));
@@ -1132,7 +1133,7 @@ static boolean pack_make(
 	import_gather(import);
 	if (import->failure)
 	{
-		platform_log("player skins: The Maw's tags cannot be used: %s", import->failure);
+		platform_log("player skins: Two Betrayals' tags cannot be used: %s", import->failure);
 		goto done;
 	}
 	header->range_count = ranges_merge(import->ranges, import->range_count);
@@ -1154,7 +1155,7 @@ static boolean pack_make(
 	}
 	if (!donor_copy_ranges(raw, raw_length, header->file_length, import->ranges, header->range_count, pack))
 	{
-		platform_log("player skins: The Maw's bitmaps and sounds could not be read (%ld ranges)", header->range_count);
+		platform_log("player skins: Two Betrayals' bitmaps and sounds could not be read (%ld ranges)", header->range_count);
 		goto done;
 	}
 	header->range_table_offset = (long)pack_offset;
@@ -1193,8 +1194,8 @@ done:
 	return success;
 }
 
-/* the skins' cache file, open, made (again) if it is not The Maw's of now;
-NULL if The Maw cannot be read */
+/* the skins' cache file, open, made (again) if it is not Two Betrayals' of now;
+NULL if Two Betrayals cannot be read */
 static FILE *pack_open(
 	struct skin_pack_header *header)
 {
@@ -1377,7 +1378,7 @@ boolean skin_tags_import(
 	import_gather(import);
 	if (import->failure)
 	{
-		platform_log("player skins: The Maw's tags cannot be used: %s", import->failure);
+		platform_log("player skins: Two Betrayals' tags cannot be used: %s", import->failure);
 		goto done;
 	}
 
@@ -1454,7 +1455,7 @@ boolean skin_tags_import(
 		import_instances = NULL;
 		if (import->failure)
 		{
-			platform_log("player skins: The Maw's tags could not be copied: %s", import->failure);
+			platform_log("player skins: Two Betrayals' tags could not be copied: %s", import->failure);
 			goto done;
 		}
 
@@ -1490,7 +1491,7 @@ boolean skin_tags_import(
 	skin_tags_globals.imported = TRUE;
 	tag_validate_set_extra_buffers(skin_tags_globals.vertex_headers, skin_tags_globals.vertex_header_count,
 		skin_tags_globals.index_headers, skin_tags_globals.index_header_count);
-	platform_log("player skins: %ld tags of The Maw's added to %s (%lu bytes, %ld models' parts)",
+	platform_log("player skins: %ld tags of Two Betrayals' added to %s (%lu bytes, %ld models' parts)",
 		skin_tags_globals.count, map_name_text, import->out_used, import->part_count);
 	success = TRUE;
 
