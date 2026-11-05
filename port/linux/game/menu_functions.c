@@ -861,6 +861,9 @@ static void campaign_levels_read(struct player_profile const *profile)
 				campaign.levels[level].finished[marker] |= (flags >> (marker + 1)) & 1;
 		}
 	}
+	/* port: every level is open from the start, at any difficulty */
+	for (level = 0; level < NUMBER_OF_SINGLE_PLAYER_LEVELS; level++)
+		campaign.levels[level].available = TRUE;
 	if (player_spawn_count >= 2 || !ui_widget_port_saved_game(&map_name, &campaign.saved_level, &difficulty))
 		campaign.saved_level = NONE;
 }
@@ -3323,6 +3326,8 @@ static struct
 	/* the level or Custom Edition campaign map (the kind's entry) whose
 	difficulties are listed */
 	short level;
+	/* port: CO-OP CAMPAIGN's ("port coop map"): the list opens on the levels */
+	boolean coop_opening;
 } map_list;
 
 #define SERVER_SETUP_NAME "pc\\main_menu\\multiplayer_type_select\\server_settings\\server_settings_screen"
@@ -3373,8 +3378,47 @@ static boolean map_list_initialize(struct widget_instance *list)
 		map_list.kind = MAP_KIND_CUSTOM_MULTIPLAYER;
 		last_used -= xbox_multiplayer_map_count(map_list.map_count);
 	}
+	/* port: CO-OP CAMPAIGN's Map screen opens on the campaign's levels */
+	if (map_list.coop_opening && map_list.hosting)
+	{
+		map_list.kind = MAP_KIND_SINGLEPLAYER;
+		last_used = 0;
+	}
+	map_list.coop_opening = FALSE;
 	map_kind_set(list, map_list.kind);
 	map_step_open(list, MAP_STEP_MAPS, last_used);
+	return TRUE;
+}
+
+/* port: Multiplayer's CO-OP CAMPAIGN, for 1 to 16 players on this machine
+(and any that join over the LAN): "port coop host" hosts a LAN game as
+Create Game > LAN does, then "port coop map" opens its Map screen on the
+campaign's levels, every one at any difficulty; the lobby takes the other
+controllers (START) as it does for any network game, and the game is
+network co-op (network_coop.c) */
+static boolean coop_host(struct widget_instance *widget, struct event_record *event, short controller,
+	boolean *widget_deleted)
+{
+	multiplayer.mode = _multiplayer_mode_host_lan;
+	if (!multiplayer_player(controller))
+		return FALSE;
+	p2p_set_hosting_allowed(FALSE);
+	multiplayer.game_private = !config_boolean("network.host_public");
+	p2p_set_hosting_public(FALSE);
+	multiplayer.cooperative_maximum_players_set = FALSE;
+	return ui_widget_port_host(widget, event, widget_deleted);
+}
+
+static boolean coop_map(void)
+{
+	lan_mode = TRUE;
+	multiplayer.mode = _multiplayer_mode_host_lan;
+	if (!global_network_game_server_get())
+	{
+		platform_log("menus: the co-op game could not be made (is its port in use?)");
+		return campaign_fail();
+	}
+	map_list.coop_opening = TRUE;
 	return TRUE;
 }
 
@@ -8170,6 +8214,14 @@ boolean pc_menu_event_function_invoke(
 		else if (!strcmp(name, "port lobby preview leave"))
 		{
 			return preview_leave(controller);
+		}
+		else if (!strcmp(name, "port coop host"))
+		{
+			return coop_host(widget, event, controller, widget_deleted);
+		}
+		else if (!strcmp(name, "port coop map"))
+		{
+			return coop_map();
 		}
 		else if (!strcmp(name, "port coop begin"))
 		{

@@ -361,14 +361,14 @@ struct rasterizer_cinematic_screen_effect_parameters *rasterizer_screen_effect_g
 		}
 		else
 		{
+			/* port: a co-op cutscene skipped can leave its blur on once the
+			split screen is back, which the Xbox stopped on here: the views
+			drop the blur instead */
 			if (main_get_window_count() > 1)
 			{
-				display_assert(
-					"### FATAL_ERROR screen effects can't use convolution when main_get_window_count>1\r\nmaybe you forgot to turn off the cinematic screen effect?",
-					"c:\\halo\\SOURCE\\rasterizer\\rasterizer_cinematics.c",
-					336,
-					TRUE);
-				system_exit(-1);
+				cinematic_screen_effect_globals->parameters.convolution_radius = 0.0f;
+				cinematic_screen_effect_globals->parameters.convolution_type = 0;
+				cinematic_screen_effect_globals->parameters.convolution_extra_passes = 0;
 			}
 
 			parameters = &cinematic_screen_effect_globals->parameters;

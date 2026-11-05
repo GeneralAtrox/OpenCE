@@ -2081,8 +2081,13 @@ def _coop() -> list:
                     [("type", "text"), ("left", 51), ("width", 232), ("height", 32), ("bitmap", "bitmaps/list_item_bkd"),
                      ("string_list", f"{MT}/multiplayer_options"), ("string_index", 7), ("font", "ui\\large_ui"),
                      ("color", "#FF2896FF"), ("text_x", 13), ("text_y", 5)],
-                    [f'<on event="a" run="port coop begin" open="{base}/player_2_profile_screen" branch="true"/>',
-                     f'<on event="start" run="port coop begin" open="{base}/player_2_profile_screen" branch="true"/>',
+                    # (port: hosted network co-op on the LAN for 1 to 16
+                    # players here, on the Map screen's levels: menu_functions.c's
+                    # coop_host; the player 2 screens below are the Xbox's two)
+                    ['<on event="a" run="port coop host"/>',
+                     f'<on event="a" run="port coop map" open="{MT}/connected/connected_map_select_wrapper"/>',
+                     '<on event="start" run="port coop host"/>',
+                     f'<on event="start" run="port coop map" open="{MT}/connected/connected_map_select_wrapper"/>',
                      '<on event="left_mouse" run="mouse emit accept event"/>'])
     lines += _widget(f"{base}/player_2_profile_screen", [("width", 640), ("height", 480),
                                                          ("flags", "pass_unhandled_to_focused_child"),
