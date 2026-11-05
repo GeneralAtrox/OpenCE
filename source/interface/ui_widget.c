@@ -7488,6 +7488,35 @@ void render_ui_widgets_postgame(
 screen), noting and settling the first player's tap targets in the frame's
 first render that can, and draws the debug view of the targets and the
 virtual keyboard when they are up */
+/* port: (render.c) how much smaller the player's menus are drawn in its
+view: a full-screen menu (480 high) opened in a view less high, as network
+co-op's pause menu is for each player of a split screen (ui_check_for_pause_game),
+is drawn whole, that much smaller; else 1 */
+real ui_widget_port_view_scale(
+	short local_player_index,
+	short view_height)
+{
+	real scale = 1.0f;
+	long widget_index;
+
+	if (view_height <= 0 || local_player_index < 0 || virtual_keyboard_active())
+		return scale;
+	for (widget_index = 0; widget_index < MAXIMUM_NUMBER_OF_LOCAL_PLAYERS; widget_index++)
+	{
+		struct widget_instance *widget = widget_globals.active_widgets[widget_index];
+		struct ui_widget_definition *definition;
+		short height;
+
+		if (!widget || widget->local_player_index != local_player_index || widget->definition_tag_index == NONE)
+			continue;
+		definition = ui_widget_definition_get(widget->definition_tag_index);
+		height = (short)(definition->bounds.y1 - definition->bounds.y0);
+		if (height > view_height && (real)view_height / height < scale)
+			scale = (real)view_height / height;
+	}
+	return scale;
+}
+
 void render_ui_widgets(
 	short local_player_index,
 	rectangle2d const *window_bounds)

@@ -118,6 +118,12 @@ static char const *const skin_root_bipeds[] =
 	"characters\\hunter\\hunter",
 	NULL
 };
+#define SKIN_ROOTS_ALL ((1UL << (NUMBEROF(skin_root_bipeds) - 1)) - 1)
+
+/* the bodies left out first when a map's tag cache has no room for all of
+them (a campaign level's, in co-op): the stealth Elite, the Flood, the Elite;
+the Hunter last. Every machine leaves out the same: the room is the map's */
+static short const skin_drop_order[] = { 1, 2, 3, 0, 4 };
 
 /* rasterizer_geometry.c's rasterizer_vertex_type_sizes */
 static short const skin_vertex_type_sizes[] =
@@ -238,6 +244,9 @@ struct skin_import
 	long index_header_count;
 	boolean copying;
 	char const *failure;
+	/* the skin_root_bipeds not gathered (bits): the map's own, and those
+	left out for room (import_retry) */
+	unsigned long skipped;
 };
 
 static struct
@@ -476,6 +485,40 @@ static void import_range_add(
 	import->range_count++;
 
 	return;
+}
+
+/* no room for the bodies gathered: one fewer (skin_drop_order's first
+still gathered), to gather and copy again; FALSE when another failure, or
+none would be left */
+static boolean import_retry(
+	struct skin_import *import,
+	char const *map_name_text)
+{
+	short index;
+
+	if (!import->failure || strcmp(import->failure, "no room in the tag cache"))
+		return FALSE;
+	for (index = 0; index < (short)NUMBEROF(skin_drop_order); index++)
+	{
+		short root = skin_drop_order[index];
+
+		if (import->skipped & (1UL << root))
+			continue;
+		import->skipped |= 1UL << root;
+		if ((import->skipped & SKIN_ROOTS_ALL) == SKIN_ROOTS_ALL)
+			return FALSE;
+		platform_log("player skins: no room in %s for every body: %s is left out", map_name_text,
+			skin_root_bipeds[root]);
+		import->order_count = 0;
+		import->out_used = 0;
+		import->part_count = 0;
+		import->vertex_header_count = 0;
+		import->index_header_count = 0;
+		import->copying = FALSE;
+		import->failure = NULL;
+		return TRUE;
+	}
+	return FALSE;
 }
 
 /* size bytes of the copies' space, aligned to alignment */
@@ -817,8 +860,11 @@ static void import_gather(
 		import->remap[index] = REMAP_UNSEEN;
 	for (index = 0; skin_root_bipeds[index] && !import->failure; index++)
 	{
-		long root = donor_tag_find(&import->donor, 'bipd', skin_root_bipeds[index]);
+		long root;
 
+		if (import->skipped & (1UL << index))
+			continue;
+		root = donor_tag_find(&import->donor, 'bipd', skin_root_bipeds[index]);
 		if (root == NONE)
 		{
 			import_fail(import, "Two Betrayals has not got a skin's biped");
@@ -1363,9 +1409,12 @@ boolean skin_tags_import(
 
 	/* (a map that has every skin's biped plays its own; one with some, a
 	campaign level's, keeps its own of those, import_reference) */
-	for (index = 0; skin_root_bipeds[index] && map_tag_find(import, 'bipd', skin_root_bipeds[index]) != NONE; index++)
-		;
-	if (!skin_root_bipeds[index])
+	for (index = 0; skin_root_bipeds[index]; index++)
+	{
+		if (map_tag_find(import, 'bipd', skin_root_bipeds[index]) != NONE)
+			import->skipped |= 1UL << index;
+	}
+	if (import->skipped == SKIN_ROOTS_ALL)
 		goto done;
 
 	start = (SKIN_LINK_ADDRESS + import->map_size + 15) & ~15UL;
@@ -1388,10 +1437,14 @@ boolean skin_tags_import(
 	if (!import->remap)
 		goto done;
 
-	/* the tags to copy, and their models' parts */
+	/* the tags to copy, and their models' parts (again with a body fewer
+	while they do not fit: import_retry) */
+retry:
 	import_gather(import);
 	if (import->failure)
 	{
+		if (import_retry(import, map_name_text))
+			goto retry;
 		platform_log("player skins: Two Betrayals' tags cannot be used: %s", import->failure);
 		goto done;
 	}
@@ -1414,6 +1467,8 @@ boolean skin_tags_import(
 		import->index_headers = import_allocate(import, (unsigned long)(import->part_count + 1) * BUFFER_SIZE, 4);
 		if (import->failure)
 		{
+			if (import_retry(import, map_name_text))
+				goto retry;
 			platform_log("player skins: %s", import->failure);
 			goto done;
 		}
@@ -1469,6 +1524,8 @@ boolean skin_tags_import(
 		import_instances = NULL;
 		if (import->failure)
 		{
+			if (import_retry(import, map_name_text))
+				goto retry;
 			platform_log("player skins: Two Betrayals' tags could not be copied: %s", import->failure);
 			goto done;
 		}

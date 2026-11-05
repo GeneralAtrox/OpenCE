@@ -480,9 +480,34 @@ static void render_window(
 				*scaled_bounds[5] = scaled[5];
 				halo_screen_view_scale_begin(ui_scale);
 			}
-			/* port: the view's menus centred in it (a quarter's are 320 wide) */
-			halo_screen_ui_offset_view(rasterizer_camera->viewport_bounds.x1 - rasterizer_camera->viewport_bounds.x0);
-			render_ui_widgets(local_player_index, &rasterizer_camera->viewport_bounds);
+			/* port: the view's menus centred in it (a quarter's are 320 wide);
+			a full-screen menu in a view less high (network co-op's pause menu,
+			each player's of a split screen) drawn whole, that much smaller
+			(ui_widget_port_view_scale), centred */
+			{
+				extern real ui_widget_port_view_scale(short local_player_index, short view_height);
+				extern void halo_screen_ui_offset_layout(long layout_width);
+				short view_width = rasterizer_camera->viewport_bounds.x1 - rasterizer_camera->viewport_bounds.x0;
+				short view_height = rasterizer_camera->viewport_bounds.y1 - rasterizer_camera->viewport_bounds.y0;
+				real menu_scale = ui_scale < 1.0f ? 1.0f : ui_widget_port_view_scale(local_player_index, view_height);
+
+				if (menu_scale < 1.0f)
+				{
+					rectangle2d menu_bounds = rasterizer_camera->viewport_bounds;
+
+					menu_bounds.x1 = (short)(menu_bounds.x0 + view_width / menu_scale);
+					menu_bounds.y1 = (short)(menu_bounds.y0 + view_height / menu_scale);
+					halo_screen_view_scale_begin(menu_scale);
+					halo_screen_ui_offset_layout((long)(view_width / menu_scale));
+					render_ui_widgets(local_player_index, &menu_bounds);
+					halo_screen_view_scale_end();
+				}
+				else
+				{
+					halo_screen_ui_offset_view(view_width);
+					render_ui_widgets(local_player_index, &rasterizer_camera->viewport_bounds);
+				}
+			}
 			halo_screen_ui_offset(FALSE);
 			if (ui_scale < 1.0f)
 			{

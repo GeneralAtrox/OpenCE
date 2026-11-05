@@ -479,6 +479,13 @@ void halo_screen_ui_offset_view(long view_width)
 	ui_offset = view_width > 0 && view_width < width ? (view_width > 320 ? (view_width - 320) / 2 : 0) : (width - 640) / 2;
 }
 
+/* the menus centred in a layout that wide: a full-screen menu drawn smaller
+into a view (render.c, halo_screen_view_scale_begin) */
+void halo_screen_ui_offset_layout(long layout_width)
+{
+	ui_offset = layout_width > 640 ? (layout_width - 640) / 2 : 0;
+}
+
 long halo_screen_ui_offset_current(void)
 {
 	return ui_offset;
