@@ -206,7 +206,8 @@ static void skin_weapons_fill(
 			struct weapon_magazine_definition *magazine = TAG_BLOCK_GET_ELEMENT(&definition->weapon.magazines,
 				magazine_index, struct weapon_magazine_definition);
 
-			if (weapon->weapon.magazines[magazine_index].rounds_total + weapon->weapon.magazines[magazine_index].rounds_loaded > 0)
+			if (weapon->weapon.magazines[magazine_index].rounds_total + weapon->weapon.magazines[magazine_index].rounds_loaded > 0 ||
+				magazine->rounds_loaded_maximum + magazine->rounds_total_maximum <= 0)
 				continue;
 			weapon->weapon.magazines[magazine_index].rounds_loaded = magazine->rounds_loaded_maximum;
 			weapon->weapon.magazines[magazine_index].rounds_total = magazine->rounds_total_maximum;
