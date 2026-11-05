@@ -496,14 +496,23 @@ static void render_window(
 					local_player_index, rasterizer_camera->viewport_bounds.x0, rasterizer_camera->viewport_bounds.y0, view_width, view_height, ui_scale, menu_scale); }
 				if (menu_scale < 1.0f)
 				{
-					rectangle2d menu_bounds = rasterizer_camera->viewport_bounds;
-
-					menu_bounds.x1 = (short)(menu_bounds.x0 + view_width / menu_scale);
-					menu_bounds.y1 = (short)(menu_bounds.y0 + view_height / menu_scale);
+					/* (the view's bounds enlarged about its corner, as for
+					more than four views above: the menus are drawn through them) */
+					for (index = 0; index < 6; index++)
+					{
+						saved_bounds[index] = *scaled_bounds[index];
+						scaled[index].x0 = (short)(corner_x + (saved_bounds[index].x0 - corner_x) / menu_scale);
+						scaled[index].x1 = (short)(corner_x + (saved_bounds[index].x1 - corner_x) / menu_scale);
+						scaled[index].y0 = (short)(corner_y + (saved_bounds[index].y0 - corner_y) / menu_scale);
+						scaled[index].y1 = (short)(corner_y + (saved_bounds[index].y1 - corner_y) / menu_scale);
+						*scaled_bounds[index] = scaled[index];
+					}
 					halo_screen_view_scale_begin(menu_scale);
 					halo_screen_ui_offset_layout((long)(view_width / menu_scale));
-					render_ui_widgets(local_player_index, &menu_bounds);
+					render_ui_widgets(local_player_index, &rasterizer_camera->viewport_bounds);
 					halo_screen_view_scale_end();
+					for (index = 0; index < 6; index++)
+						*scaled_bounds[index] = saved_bounds[index];
 				}
 				else
 				{
