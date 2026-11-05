@@ -6808,6 +6808,8 @@ static boolean join4_profile_free(short controller, long profile)
 	return !join4_profile_has(controller, profile, TRUE);
 }
 
+static boolean join4_set(short controller, unsigned char state);
+
 /* port: the quarter's spinner shows the profiles its player may pick: those
 that read, that no other player plays or selected (on keep, if it is one):
 the one it is on, NONE when there are none */
