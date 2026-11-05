@@ -262,6 +262,16 @@ static struct
 
 /* ---------- private code */
 
+/* (the game's allocator, which free is here, takes no NULL: cseries.h) */
+static void skin_free(
+	void *pointer)
+{
+	if (pointer)
+		free(pointer);
+
+	return;
+}
+
 static struct tag_schema_group const *skin_schema_group(
 	unsigned long group_tag)
 {
@@ -898,8 +908,8 @@ static boolean donor_copy_ranges(
 	out = malloc(INFLATE_OUT_BYTES);
 	if (!in || !out)
 	{
-		free(in);
-		free(out);
+		skin_free(in);
+		skin_free(out);
 		return FALSE;
 	}
 
@@ -980,8 +990,8 @@ static boolean donor_copy_ranges(
 	success = range_index >= range_count;
 
 done:
-	free(in);
-	free(out);
+	skin_free(in);
+	skin_free(out);
 
 	return success;
 }
@@ -1030,7 +1040,7 @@ static boolean donor_load(
 	if (!donor->data || fseek(pack, header->tag_data_pack_offset, SEEK_SET) ||
 		fread(donor->data, 1, donor->size, pack) != donor->size)
 	{
-		free(donor->data);
+		skin_free(donor->data);
 		donor->data = NULL;
 		return FALSE;
 	}
@@ -1112,7 +1122,7 @@ static boolean pack_make(
 	import_gather(import);
 	if (import->failure)
 	{
-		platform_log("player skins: The Maw's tags cannot be used: %s\n", import->failure);
+		platform_log("player skins: The Maw's tags cannot be used: %s", import->failure);
 		goto done;
 	}
 	header->range_count = ranges_merge(import->ranges, import->range_count);
@@ -1143,17 +1153,17 @@ static boolean pack_make(
 	{
 		goto done;
 	}
-	platform_log("player skins: made %s (%ld tags, %ld file ranges, %lu bytes)\n", path, import->order_count,
+	platform_log("player skins: made %s (%ld tags, %ld file ranges, %lu bytes)", path, import->order_count,
 		header->range_count, pack_offset + header->range_count * (unsigned long)sizeof(struct skin_range));
 	success = TRUE;
 
 done:
 	if (import)
 	{
-		free(import->donor.data);
-		free(import->remap);
-		free(import->ranges);
-		free(import);
+		skin_free(import->donor.data);
+		skin_free(import->remap);
+		skin_free(import->ranges);
+		skin_free(import);
 	}
 	fclose(pack);
 	if (success)
@@ -1186,12 +1196,12 @@ static FILE *pack_open(
 	raw = fopen(donor_path, "rb");
 	if (!raw)
 	{
-		platform_log("player skins: no %s.map, so no Elite, Flood or Hunter (%s)\n", SKIN_DONOR_MAP, donor_path);
+		platform_log("player skins: no %s.map, so no Elite, Flood or Hunter (%s)", SKIN_DONOR_MAP, donor_path);
 		return NULL;
 	}
 	if (!donor_header_read(raw, donor_header, &raw_length))
 	{
-		platform_log("player skins: %s is not a map this game plays\n", donor_path);
+		platform_log("player skins: %s is not a map this game plays", donor_path);
 		fclose(raw);
 		return NULL;
 	}
@@ -1215,10 +1225,10 @@ static FILE *pack_open(
 		fclose(pack);
 	}
 
-	platform_log("player skins: making %s from %s\n", path, donor_path);
+	platform_log("player skins: making %s from %s", path, donor_path);
 	if (!pack_make(raw, raw_length, donor_header, header))
 	{
-		platform_log("player skins: could not make %s\n", path);
+		platform_log("player skins: could not make %s", path);
 		fclose(raw);
 		return NULL;
 	}
@@ -1299,7 +1309,7 @@ boolean skin_tags_import(
 	scenario_tags_unload deregistered them) */
 	if (skin_tags_globals.pack)
 		fclose(skin_tags_globals.pack);
-	free(skin_tags_globals.ranges);
+	skin_free(skin_tags_globals.ranges);
 	memset(&skin_tags_globals, 0, sizeof(skin_tags_globals));
 	tag_validate_set_extra_buffers(NULL, 0, NULL, 0);
 	if (header_type != _cache_file_type_multiplayer || !map_name_text || !_stricmp(map_name_text, SKIN_DONOR_MAP))
@@ -1331,7 +1341,7 @@ boolean skin_tags_import(
 	limit = map_structure_bsp_limit(import, header);
 	if (limit <= start)
 	{
-		platform_log("player skins: no room in %s's tag cache\n", map_name_text);
+		platform_log("player skins: no room in %s's tag cache", map_name_text);
 		goto done;
 	}
 
@@ -1340,7 +1350,7 @@ boolean skin_tags_import(
 		goto done;
 	if (!donor_load(&import->donor, pack, &pack_header))
 	{
-		platform_log("player skins: the skins' cache file cannot be read\n");
+		platform_log("player skins: the skins' cache file cannot be read");
 		goto done;
 	}
 	import->remap = malloc((size_t)import->donor.count * sizeof(long));
@@ -1351,7 +1361,7 @@ boolean skin_tags_import(
 	import_gather(import);
 	if (import->failure)
 	{
-		platform_log("player skins: The Maw's tags cannot be used: %s\n", import->failure);
+		platform_log("player skins: The Maw's tags cannot be used: %s", import->failure);
 		goto done;
 	}
 
@@ -1365,7 +1375,7 @@ boolean skin_tags_import(
 
 		if (new_count > 0xFFFF)
 		{
-			platform_log("player skins: too many tags\n");
+			platform_log("player skins: too many tags");
 			goto done;
 		}
 		instances = (struct skin_instance *)import_allocate(import, (unsigned long)new_count * sizeof(*instances), 4);
@@ -1373,7 +1383,7 @@ boolean skin_tags_import(
 		import->index_headers = import_allocate(import, (unsigned long)(import->part_count + 1) * BUFFER_SIZE, 4);
 		if (import->failure)
 		{
-			platform_log("player skins: %s\n", import->failure);
+			platform_log("player skins: %s", import->failure);
 			goto done;
 		}
 		memcpy(instances, import->map_instances, (size_t)import->map_count * sizeof(*instances));
@@ -1428,7 +1438,7 @@ boolean skin_tags_import(
 		import_instances = NULL;
 		if (import->failure)
 		{
-			platform_log("player skins: The Maw's tags could not be copied: %s\n", import->failure);
+			platform_log("player skins: The Maw's tags could not be copied: %s", import->failure);
 			goto done;
 		}
 
@@ -1453,7 +1463,7 @@ boolean skin_tags_import(
 		fread(skin_tags_globals.ranges, sizeof(struct skin_range), (size_t)pack_header.range_count, pack) !=
 			(size_t)pack_header.range_count)
 	{
-		platform_log("player skins: the skins' cache file cannot be read\n");
+		platform_log("player skins: the skins' cache file cannot be read");
 		skin_tags_import_undo(tag_header, tag_data_size);
 		goto done;
 	}
@@ -1464,7 +1474,7 @@ boolean skin_tags_import(
 	skin_tags_globals.imported = TRUE;
 	tag_validate_set_extra_buffers(skin_tags_globals.vertex_headers, skin_tags_globals.vertex_header_count,
 		skin_tags_globals.index_headers, skin_tags_globals.index_header_count);
-	platform_log("player skins: %ld tags of The Maw's added to %s (%lu bytes, %ld models' parts)\n",
+	platform_log("player skins: %ld tags of The Maw's added to %s (%lu bytes, %ld models' parts)",
 		skin_tags_globals.count, map_name_text, import->out_used, import->part_count);
 	success = TRUE;
 
@@ -1473,9 +1483,9 @@ done:
 		fclose(pack);
 	if (import)
 	{
-		free(import->donor.data);
-		free(import->remap);
-		free(import);
+		skin_free(import->donor.data);
+		skin_free(import->remap);
+		skin_free(import);
 	}
 
 	return success;
@@ -1579,7 +1589,7 @@ void skin_tags_unloaded(
 	}
 	if (skin_tags_globals.pack)
 		fclose(skin_tags_globals.pack);
-	free(skin_tags_globals.ranges);
+	skin_free(skin_tags_globals.ranges);
 	memset(&skin_tags_globals, 0, sizeof(skin_tags_globals));
 	tag_validate_set_extra_buffers(NULL, 0, NULL, 0);
 
@@ -1617,7 +1627,7 @@ boolean skin_tags_read(
 			fread((byte *)buffer + (start - (unsigned long)offset), 1, end - start, skin_tags_globals.pack) !=
 				end - start)
 		{
-			platform_log("player skins: could not read %ld bytes at %08lx\n", size, (unsigned long)offset);
+			platform_log("player skins: could not read %ld bytes at %08lx", size, (unsigned long)offset);
 		}
 	}
 
