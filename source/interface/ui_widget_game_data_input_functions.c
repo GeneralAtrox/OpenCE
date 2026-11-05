@@ -1878,8 +1878,11 @@ static void splitscreen_pregame_status_screen_update(
 		}
 		machine_icon->animation.current_frame_index = local_machine_found ? 1 : 0;
 
+		/* port: the screen has four players' widgets (player_widgets[0] to
+		[3], above), not MAXIMUM_LOCAL_PLAYERS (16 in the port): players 5 to
+		16 join through the PC lobby, not this screen */
 		for (local_player_index = 0;
-			local_player_index < MAXIMUM_LOCAL_PLAYERS;
+			local_player_index < 4;
 			local_player_index++)
 		{
 			struct widget_instance *controller_bitmap;
