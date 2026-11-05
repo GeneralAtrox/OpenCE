@@ -6874,6 +6874,11 @@ static boolean join4_choosing(struct widget_instance *quarter)
 		join4_profiles_show(quarter, controller, NONE);
 	}
 	profile = ui_widget_port_spinner_first_available(quarter, join4_profile_free);
+	if (controller < JOIN4_QUARTERS)
+	{
+		platform_log("menus: player %d chooses a profile: %d of %d shown%s", controller + 1, join4.shown[controller],
+			join4.profile_count[controller], profile == NONE ? ", none free" : "");
+	}
 	if (profile == NONE)
 		profile = join4_profile_new(quarter, controller);
 	join4.starting[controller] = profile;
@@ -6888,15 +6893,19 @@ static boolean join4_skin(struct widget_instance *quarter)
 	return TRUE;
 }
 
-/* the quarter's skin, and what its X and Y do */
-static void join4_skin_show(struct widget_instance *quarter, short controller, boolean choosing)
+/* the controller's quarter's skin, and what its X and Y do (the screen's
+nth "join4_skin": the quarter's widgets are the Xbox's), else nothing */
+static void join4_skin_show(struct widget_instance *screen, short controller, boolean selecting, boolean choosing)
 {
-	wchar_t text[96];
+	wchar_t text[96] = L"";
 
-	usnprintf(text, NUMBEROF(text) - 1, choosing ? L"X: SKIN  %s\r\nY: NEW PROFILE" : L"X: SKIN  %s",
-		player_skins_name(player_skins_local_choice(controller)));
-	text[NUMBEROF(text) - 1] = 0;
-	text_set(named(quarter, "join4_qtr_skin", 0), text);
+	if (selecting)
+	{
+		usnprintf(text, NUMBEROF(text) - 1, choosing ? L"X: SKIN  %s\r\nY: NEW PROFILE" : L"X: SKIN  %s",
+			player_skins_name(player_skins_local_choice(controller)));
+		text[NUMBEROF(text) - 1] = 0;
+	}
+	text_set(named(screen, "join4_skin", controller), text);
 }
 
 /* "port join4 select" (A, START on the spinner): the profile is the
@@ -6965,10 +6974,12 @@ static boolean join4_done(short pressed_by)
 	{
 		long profile = player_ui_get_active_player_profile_index(controller);
 
-		if (join4.state[controller] == _join4_selected && profile != NONE &&
-			!lobby_controller_playing(controller) && !ui_widget_port_multiplayer_player(controller, profile))
+		if (join4.state[controller] == _join4_selected && profile != NONE && !lobby_controller_playing(controller))
 		{
-			platform_log("menus: player %d could not join", controller + 1);
+			if (!ui_widget_port_multiplayer_player(controller, profile))
+				platform_log("menus: player %d could not join", controller + 1);
+			else
+				platform_log("menus: player %d joins, skin %d", controller + 1, player_skins_local_choice(controller));
 		}
 	}
 	lobby_join_reset();
@@ -7002,19 +7013,27 @@ static void join4_update(struct widget_instance *widget)
 	long select = tag_loaded('DeLa', JOIN4_SELECT_NAME);
 	long ready = tag_loaded('DeLa', JOIN4_READY_NAME);
 
+	boolean selecting[JOIN4_QUARTERS] = { FALSE };
+	boolean choosing[JOIN4_QUARTERS] = { FALSE };
+	short controller;
+
 	/* (a choosing quarter's profiles, as others pick theirs; each quarter's
 	skin) */
 	for (quarter = screen->child; quarter; quarter = quarter->next)
 	{
-		short controller = quarter->local_player_index;
-
-		if (controller < 0 || controller >= JOIN4_QUARTERS || quarter->definition_tag_index == NONE)
+		controller = quarter->local_player_index;
+		if (controller < 0 || controller >= JOIN4_QUARTERS || quarter->definition_tag_index == NONE ||
+			(quarter->definition_tag_index != select && quarter->definition_tag_index != ready))
+		{
 			continue;
-		if (quarter->definition_tag_index == select && join4.state[controller] == _join4_choosing)
+		}
+		selecting[controller] = TRUE;
+		choosing[controller] = quarter->definition_tag_index == select;
+		if (choosing[controller] && join4.state[controller] == _join4_choosing)
 			join4_profiles_show(quarter, controller, NONE);
-		if (quarter->definition_tag_index == select || quarter->definition_tag_index == ready)
-			join4_skin_show(quarter, controller, quarter->definition_tag_index == select);
 	}
+	for (controller = 0; controller < JOIN4_QUARTERS; controller++)
+		join4_skin_show(screen, controller, selecting[controller], choosing[controller]);
 	join4_keyboard();
 	text_set(named(screen, "join4_hint", 0),
 		system_milliseconds() < join4.notice_until ? join4.notice :
