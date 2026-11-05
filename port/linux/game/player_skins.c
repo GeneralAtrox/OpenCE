@@ -23,7 +23,10 @@ What a skin's body cannot do (it is a campaign character's):
   (the oddball, the flag), as it has no animations of its own for
   them; a Flood form holds a sniper rifle and the flag as an assault rifle,
   and the oddball as a pistol;
-- a Hunter has only its fuel rod cannon, and picks up nothing else;
+- a Hunter has only its fuel rod cannon, and picks up nothing else; the
+  cannon never runs out, as an actor's, and a player's pauses to reload
+  after HUNTER_SHOTS_PER_RELOAD shots; it strikes with its shield (its
+  biped's melee damage, as the cannon has none);
 - the Flood and the Hunter cannot drive or ride a vehicle (their animations
   have no seats in one), nor the Flood throw a grenade;
 - a stealth Elite is not camouflaged (it is as any player is, with the
@@ -62,6 +65,11 @@ enum
 	NUMBER_OF_SKIN_BODIES,
 
 	MAXIMUM_SKIN_LOCAL_PLAYERS = 16,
+
+	/* a player Hunter's cannon: the shots between reloads, and a reload's
+	ticks */
+	HUNTER_SHOTS_PER_RELOAD = 5,
+	HUNTER_RELOAD_TICKS = 5 * TICKS_PER_SECOND / 2,
 };
 
 struct player_skin_definition
@@ -142,6 +150,8 @@ static struct
 	long bipeds[NUMBER_OF_SKIN_BODIES];
 	/* the shots each body's weapons have fired, in this map */
 	long shots[NUMBER_OF_SKIN_BODIES];
+	/* and the blows they have struck */
+	long melees[NUMBER_OF_SKIN_BODIES];
 	boolean loaded;
 } player_skins_globals;
 
@@ -317,21 +327,75 @@ void player_skins_unit_spawned(
 	return;
 }
 
-void player_skins_weapon_fired(
+/* the skin body unit_index is, if a player's, else NONE */
+static short player_skin_body_of_unit(
 	long unit_index)
 {
-	short body;
+	struct unit_datum *unit;
 
 	if (unit_index == NONE || !player_skins_globals.loaded)
-		return;
-	body = skin_body_of_definition(object_get(unit_index)->definition_index);
+		return NONE;
+	unit = unit_get(unit_index);
+	if (unit->unit.player_index == NONE)
+		return NONE;
+
+	return skin_body_of_definition(unit->definition_index);
+}
+
+boolean player_skins_weapon_fire(
+	long weapon_index,
+	long unit_index)
+{
+	short body = player_skin_body_of_unit(unit_index);
+	struct weapon_datum *weapon;
+	struct weapon_definition *definition;
+
 	if (body == NONE)
-		return;
+		return TRUE;
+	weapon = weapon_get(weapon_index);
+	definition = weapon_definition_get(weapon->definition_index);
+	/* the Hunter's cannon, an actor's, has a magazine of no rounds, which
+	never empties: its rounds_total counts the shots since the last reload
+	and its state_timer the reload's ticks, which weapon_update counts down
+	(the magazine's state stays idle) */
+	if (body == _skin_body_hunter && definition->weapon.magazines.count > 0 &&
+		TAG_BLOCK_GET_ELEMENT(&definition->weapon.magazines, 0, struct weapon_magazine_definition)->rounds_loaded_maximum <= 0)
+	{
+		struct weapon_magazine *magazine = &weapon->weapon.magazines[0];
+
+		if (magazine->state_timer > 0)
+			return FALSE;
+		magazine->rounds_total++;
+		if (magazine->rounds_total >= HUNTER_SHOTS_PER_RELOAD)
+		{
+			magazine->rounds_total = 0;
+			magazine->state_timer = HUNTER_RELOAD_TICKS;
+			platform_log("player skins: a Hunter reloads after %d shots (%ld fired)", (int)HUNTER_SHOTS_PER_RELOAD,
+				player_skins_globals.shots[body] + 1);
+		}
+	}
 	player_skins_globals.shots[body]++;
 	if (player_skins_globals.shots[body] == 1 || player_skins_globals.shots[body] % 25 == 0)
 	{
 		platform_log("player skins: %s has fired %ld shots", skin_body_bipeds[body],
 			player_skins_globals.shots[body]);
+	}
+
+	return TRUE;
+}
+
+void player_skins_unit_melee(
+	long unit_index)
+{
+	short body = player_skin_body_of_unit(unit_index);
+
+	if (body == NONE)
+		return;
+	player_skins_globals.melees[body]++;
+	if (player_skins_globals.melees[body] == 1 || player_skins_globals.melees[body] % 10 == 0)
+	{
+		platform_log("player skins: %s has struck %ld blows", skin_body_bipeds[body],
+			player_skins_globals.melees[body]);
 	}
 
 	return;
@@ -359,6 +423,7 @@ void player_skins_tags_unloaded(
 	{
 		player_skins_globals.bipeds[body] = NONE;
 		player_skins_globals.shots[body] = 0;
+		player_skins_globals.melees[body] = 0;
 	}
 	player_skins_globals.loaded = FALSE;
 

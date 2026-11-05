@@ -46,9 +46,12 @@ char const *player_skins_weapon_label(long definition_index, char const *weapon_
 /* a player's unit was made (the host's) or attached (a client's): logged,
 if it is a skin's body or the player chose one */
 void player_skins_unit_spawned(long player_index, long unit_index);
-/* a weapon fired a shot, held by unit_index: counted (and logged) if the
-unit is a skin's body */
-void player_skins_weapon_fired(long unit_index);
+/* a weapon held by unit_index is about to fire a shot: FALSE while a
+player Hunter's cannon reloads; else the shot is counted (and logged) if
+the unit is a player's skin body */
+boolean player_skins_weapon_fire(long weapon_index, long unit_index);
+/* a player's unit strikes a blow: counted and logged if a skin's body */
+void player_skins_unit_melee(long unit_index);
 /* the map's tags have loaded or are going */
 void player_skins_tags_loaded(void);
 void player_skins_tags_unloaded(void);

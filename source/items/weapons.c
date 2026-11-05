@@ -2714,12 +2714,13 @@ static void weapon_trigger_fire(
 		fired= TRUE;
 	}
 
-	/* port: a skin's body's shots are counted (port/linux/game/player_skins.c) */
+	/* port: a player Hunter's cannon may be reloading, and a skin's body's
+	shots are counted (port/linux/game/player_skins.c) */
 	if (fired)
 	{
-		extern void player_skins_weapon_fired(long unit_index);
+		extern boolean player_skins_weapon_fire(long weapon_index, long unit_index);
 
-		player_skins_weapon_fired(owner_object_index);
+		fired= player_skins_weapon_fire(weapon_index, owner_object_index);
 	}
 
 	if (trigger_definition->firing_effects.count>0)

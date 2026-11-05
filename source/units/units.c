@@ -9251,6 +9251,12 @@ void unit_cause_player_melee_damage(
 		{
 			struct damage_data damage_data;
 
+			/* port: a skin's body's blows are counted (port/linux/game/player_skins.c) */
+			{
+				extern void player_skins_unit_melee(long unit_index);
+
+				player_skins_unit_melee(unit_index);
+			}
 			damage_data_new(&damage_data, melee_damage_effect_index);
 			/* port: an Infection zombie's skull's (a client's report the host
 			works out again: network_damage.c) */
