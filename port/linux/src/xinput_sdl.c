@@ -1317,7 +1317,10 @@ the first time */
 void halo_virtual_gamepads_start(void)
 {
 	if (!virtual_pads_since && virtual_pad_count > 0)
+	{
 		virtual_pads_since = SDL_GetTicks();
+		platform_log("virtual gamepads: the script's clock starts");
+	}
 }
 
 static void virtual_gamepads_attach(void)
@@ -1427,7 +1430,12 @@ static void virtual_gamepads_update(void)
 			held = now >= at && entry_index < VIRTUAL_ENTRIES &&
 				(now < at + VIRTUAL_PRESS_MS / 1000.0 || virtual_entry_polls[entry_index] < 8);
 			if (held && strcmp(what, "walk") && strcmp(what, "still"))
+			{
+				/* (each entry's press logged once, for the tests) */
+				if (!virtual_entry_polls[entry_index])
+					platform_log("virtual gamepads: %.1f s, pad %d %s", now, number, what);
 				virtual_entry_polls[entry_index]++;
+			}
 		}
 		if (sscanf(entry, "%lf %d %15[a-z]%n", &at, &number, what, &consumed) == 3 && number == 0 && held)
 		{
