@@ -5928,6 +5928,39 @@ static boolean wide_equal(wchar_t const *a, wchar_t const *b)
 	return *a == *b;
 }
 
+/* port: a profile made for the controller, "Player <n>" for its number, else
+the next "Player <n>" past the controllers' that no profile has (its name in
+name, MAXIMUM_PLAYER_PROFILE_NAME_LENGTH long, only when made): the profile,
+NONE when there is no room for another (lobby_join_direct's, and ADD
+PLAYER's: join4_profile_new) */
+static long lobby_profile_make(short controller, wchar_t *name)
+{
+	short number, index;
+
+	profile_list_read(TRUE);
+	for (number = controller + 1; number <= controller + 1 + MAXIMUM_PROFILES &&
+		profile_list.count < MAXIMUM_PROFILES; number = number == controller + 1 ? MAXIMUM_LOCAL_PLAYERS + 1 : number + 1)
+	{
+		wchar_t made[MAXIMUM_PLAYER_PROFILE_NAME_LENGTH];
+
+		usnprintf(made, NUMBEROF(made) - 1, L"Player %d", number);
+		made[NUMBEROF(made) - 1] = 0;
+		if (player_profile_new(controller, made) != NONE)
+		{
+			platform_log("menus: made profile \"Player %d\" for controller %d", number, controller + 1);
+			csmemcpy(name, made, sizeof(made));
+			profile_list_read(TRUE);
+			for (index = 0; index < profile_list.count; index++)
+			{
+				if (wide_equal(profile_list.profiles[index].player_name, made))
+					return profile_list.indices[index];
+			}
+			return NONE;
+		}
+	}
+	return NONE;
+}
+
 /* port: controller 5 to 16's START in the lobby: it joins on its own
 profile, "Player <n>", made when there is none and room for it; else the
 first profile no other player of this machine has (FALSE: no screen opens) */
@@ -5943,26 +5976,9 @@ static boolean lobby_join_direct(short controller)
 	{
 		/* (its name may be another player's profile, chosen on the 4-way
 		screen: then the next free "Player <n>" past the controllers') */
+		/* (the next pass looks for it by its name) */
 		if (pass == 1)
-		{
-			short number;
-
-			for (number = controller + 1; number <= controller + 1 + MAXIMUM_PROFILES &&
-				profile_list.count < MAXIMUM_PROFILES; number = number == controller + 1 ? MAXIMUM_LOCAL_PLAYERS + 1 : number + 1)
-			{
-				wchar_t made[MAXIMUM_PLAYER_PROFILE_NAME_LENGTH];
-
-				usnprintf(made, NUMBEROF(made) - 1, L"Player %d", number);
-				made[NUMBEROF(made) - 1] = 0;
-				if (player_profile_new(controller, made) != NONE)
-				{
-					platform_log("menus: made profile \"Player %d\" for controller %d", number, controller + 1);
-					/* (the next pass looks for it by its name) */
-					csmemcpy(name, made, sizeof(name));
-					break;
-				}
-			}
-		}
+			lobby_profile_make(controller, name);
 		profile_list_read(TRUE);
 		for (index = 0; index < profile_list.count && chosen == NONE; index++)
 		{
@@ -6631,9 +6647,31 @@ selected theirs into the lobby; player 1's B goes back without them. The
 keyboard's SPACE makes the keyboard player 1 alone, when it shares player
 1 with a gamepad and a port is free (xinput_sdl.c's halo_keyboard_alone_set):
 that gamepad then joins in a quarter of its own. Each quarter takes its own
-controller's presses (pc_menu_screen_routes_by_controller) */
+controller's presses (pc_menu_screen_routes_by_controller).
+A choosing quarter's spinner shows only the profiles its player may pick
+(none another player has, plays or selected), a profile made for it when
+there is none; its Y makes a new one ("Player <n>", lobby_profile_make), and
+X (in a choosing or selected quarter) the player's next skin (player_skins.c:
+multiplayer.skin_<n>, saved) */
 
 #define JOIN4_NAME "pc\\main_menu\\multiplayer_type_select\\lobby\\join4_screen"
+#define JOIN4_SELECT_NAME "pc\\main_menu\\multiplayer_type_select\\lobby\\join4_qtr_select"
+#define JOIN4_READY_NAME "pc\\main_menu\\multiplayer_type_select\\lobby\\join4_qtr_ready"
+/* the quarters, and the profiles a quarter's spinner may have
+(player_profiles_list_initialize's list) */
+#define JOIN4_QUARTERS 4
+#define JOIN4_PROFILES 100
+
+/* (ui_widget.c) the profiles of a quarter's spinner; those it shows */
+extern short ui_widget_port_spinner_profiles(struct widget_instance *widget, long *profiles, short maximum);
+extern long ui_widget_port_spinner_profiles_set(struct widget_instance *widget, long const *profiles, short count,
+	long keep);
+extern long ui_widget_port_spinner_first_available(struct widget_instance *widget,
+	boolean (*usable)(short controller, long profile));
+/* (player_skins.c) a local player's skin, its name, the next chosen */
+extern short player_skins_local_choice(long local_player_index);
+extern wchar_t const *player_skins_name(short skin);
+extern short player_skins_local_step(long local_player_index, short direction);
 
 /* (xinput_sdl.c) the keyboard's SPACE held; the keyboard plays player 1
 alone; whether it shares port 0 with a gamepad; how many gamepads there
@@ -6662,6 +6700,11 @@ static struct
 	/* "All four controllers are in use." and the like, for a while */
 	wchar_t notice[64];
 	unsigned long notice_until;
+	/* each choosing quarter's profiles, as its spinner was made (or read
+	again with a profile made), and how many of them it shows */
+	long profiles[JOIN4_QUARTERS][JOIN4_PROFILES];
+	short profile_count[JOIN4_QUARTERS];
+	short shown[JOIN4_QUARTERS];
 } join4;
 
 static void join4_notice(wchar_t const *text)
@@ -6765,6 +6808,95 @@ static boolean join4_profile_free(short controller, long profile)
 	return !join4_profile_has(controller, profile, TRUE);
 }
 
+/* port: the quarter's spinner shows the profiles its player may pick: those
+that read, that no other player plays or selected (on keep, if it is one):
+the one it is on, NONE when there are none */
+static long join4_profiles_show(struct widget_instance *quarter, short controller, long keep)
+{
+	long shown[JOIN4_PROFILES];
+	short index, count = 0;
+
+	if (controller < 0 || controller >= JOIN4_QUARTERS)
+		return NONE;
+	for (index = 0; index < join4.profile_count[controller]; index++)
+	{
+		long profile = join4.profiles[controller][index];
+
+		if (profile != NONE && ((unsigned long)profile & PROFILE_VALID_BIT) && !join4_profile_taken(controller, profile))
+			shown[count++] = profile;
+	}
+	join4.shown[controller] = count;
+	return ui_widget_port_spinner_profiles_set(quarter, shown, count, keep);
+}
+
+/* port: a profile made for the quarter's player (lobby_profile_make), its
+spinner on it: the profile, NONE when there is no room for one */
+static long join4_profile_new(struct widget_instance *quarter, short controller)
+{
+	wchar_t name[MAXIMUM_PLAYER_PROFILE_NAME_LENGTH];
+	wchar_t text[NUMBEROF(join4.notice)];
+	word count = JOIN4_PROFILES;
+	long made;
+
+	if (controller < 0 || controller >= JOIN4_QUARTERS)
+		return NONE;
+	made = lobby_profile_make(controller, name);
+	if (made == NONE)
+	{
+		join4_notice(L"There is no room for another profile.");
+		ui_play_audio_feedback_sound(SOUND_ERROR);
+		return NONE;
+	}
+	/* (as player_profiles_list_initialize reads them) */
+	player_profiles_enumerate_available_to_local_player_index(controller, &count, join4.profiles[controller], TRUE);
+	join4.profile_count[controller] = (short)count;
+	usnprintf(text, NUMBEROF(text) - 1, L"Player %d has a new profile, %s.", controller + 1, name);
+	text[NUMBEROF(text) - 1] = 0;
+	join4_notice(text);
+	made = join4_profiles_show(quarter, controller, made);
+	join4.starting[controller] = made;
+	return made;
+}
+
+/* "port join4 choosing" (a quarter's spinner made): on a profile no other
+player has, one made for the player when there is none */
+static boolean join4_choosing(struct widget_instance *quarter)
+{
+	short controller = controller_of(quarter);
+	long profile;
+
+	if (controller < JOIN4_QUARTERS)
+	{
+		join4.profile_count[controller] = ui_widget_port_spinner_profiles(quarter, join4.profiles[controller],
+			JOIN4_PROFILES);
+		join4_profiles_show(quarter, controller, NONE);
+	}
+	profile = ui_widget_port_spinner_first_available(quarter, join4_profile_free);
+	if (profile == NONE)
+		profile = join4_profile_new(quarter, controller);
+	join4.starting[controller] = profile;
+	return join4_set(controller, _join4_choosing);
+}
+
+/* "port join4 skin" (X): the quarter's player's next skin */
+static boolean join4_skin(struct widget_instance *quarter)
+{
+	player_skins_local_step(controller_of(quarter), 1);
+	ui_play_audio_feedback_sound(SOUND_CURSOR);
+	return TRUE;
+}
+
+/* the quarter's skin, and what its X and Y do */
+static void join4_skin_show(struct widget_instance *quarter, short controller, boolean choosing)
+{
+	wchar_t text[96];
+
+	usnprintf(text, NUMBEROF(text) - 1, choosing ? L"X: SKIN  %s\r\nY: NEW PROFILE" : L"X: SKIN  %s",
+		player_skins_name(player_skins_local_choice(controller)));
+	text[NUMBEROF(text) - 1] = 0;
+	text_set(named(quarter, "join4_qtr_skin", 0), text);
+}
+
 /* "port join4 select" (A, START on the spinner): the profile is the
 controller's ("1wide plyr prof set for game"), unless another player has it
 (FALSE: the spinner stays) */
@@ -6772,6 +6904,13 @@ static boolean join4_select(struct widget_instance *widget, struct event_record 
 {
 	short controller = controller_of(widget);
 
+	/* port: (none it may pick: the spinner is empty) */
+	if (controller < JOIN4_QUARTERS && !join4.shown[controller])
+	{
+		join4_notice(L"No profile is free: Y makes one.");
+		ui_play_audio_feedback_sound(SOUND_ERROR);
+		return FALSE;
+	}
 	if (!game_function("1wide plyr prof set for game", widget, event, widget_deleted))
 		return FALSE;
 	if (join4_profile_taken(controller, player_ui_get_active_player_profile_index(controller)))
@@ -6857,7 +6996,23 @@ controller's are the Xbox's, at the bottom right) */
 static void join4_update(struct widget_instance *widget)
 {
 	struct widget_instance *screen = screen_of(widget);
+	struct widget_instance *quarter;
+	long select = tag_loaded('DeLa', JOIN4_SELECT_NAME);
+	long ready = tag_loaded('DeLa', JOIN4_READY_NAME);
 
+	/* (a choosing quarter's profiles, as others pick theirs; each quarter's
+	skin) */
+	for (quarter = screen->child; quarter; quarter = quarter->next)
+	{
+		short controller = quarter->local_player_index;
+
+		if (controller < 0 || controller >= JOIN4_QUARTERS || quarter->definition_tag_index == NONE)
+			continue;
+		if (quarter->definition_tag_index == select && join4.state[controller] == _join4_choosing)
+			join4_profiles_show(quarter, controller, NONE);
+		if (quarter->definition_tag_index == select || quarter->definition_tag_index == ready)
+			join4_skin_show(quarter, controller, quarter->definition_tag_index == select);
+	}
 	join4_keyboard();
 	text_set(named(screen, "join4_hint", 0),
 		system_milliseconds() < join4.notice_until ? join4.notice :
@@ -8162,14 +8317,16 @@ boolean pc_menu_event_function_invoke(
 		}
 		else if (!strcmp(name, "port join4 choosing"))
 		{
-			/* (the spinner on a profile no other player has) */
-			extern long ui_widget_port_spinner_first_available(struct widget_instance *widget,
-				boolean (*usable)(short controller, long profile));
-			long profile = ui_widget_port_spinner_first_available(widget, join4_profile_free);
-
-			if (controller_of(widget) < MAXIMUM_LOCAL_PLAYERS)
-				join4.starting[controller_of(widget)] = profile;
-			return join4_set(controller_of(widget), _join4_choosing);
+			return join4_choosing(widget);
+		}
+		else if (!strcmp(name, "port join4 new profile"))
+		{
+			join4_profile_new(widget, controller_of(widget));
+			return TRUE;
+		}
+		else if (!strcmp(name, "port join4 skin"))
+		{
+			return join4_skin(widget);
 		}
 		else if (!strcmp(name, "port join4 unready"))
 		{

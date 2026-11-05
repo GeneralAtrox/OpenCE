@@ -3906,6 +3906,74 @@ long ui_widget_port_spinner_first_available(
 	return NONE;
 }
 
+/* port: (menu_functions.c's ADD PLAYER screen) the profiles of the profile
+spinner among the widget's children, up to maximum of them: how many */
+short ui_widget_port_spinner_profiles(
+	struct widget_instance *widget,
+	long *profiles,
+	short maximum)
+{
+	struct widget_instance *spinner;
+	short count;
+
+	for (spinner = widget->child; spinner && spinner->type != _ui_widget_type_spinner_list; spinner = spinner->next)
+		;
+	if (!spinner || !spinner->parameters.list.list_items)
+		return 0;
+	count = (short)MIN(spinner->parameters.list.number_of_items, (word)maximum);
+	memcpy(profiles, spinner->parameters.list.list_items, count * sizeof(long));
+	return count;
+}
+
+/* port: (menu_functions.c's ADD PLAYER screen) the profile spinner among the
+widget's children shows only the profiles given (up to the PORT_SPINNER_PROFILES
+its list was made with: player_profiles_list_initialize), on keep where it is
+one of them, else on the one it was on, else at the place it was; the profile
+it is on, NONE when it shows none */
+#define PORT_SPINNER_PROFILES 100
+long ui_widget_port_spinner_profiles_set(
+	struct widget_instance *widget,
+	long const *profiles,
+	short count,
+	long keep)
+{
+	struct widget_instance *spinner;
+	long *items;
+	long was = NONE;
+	short index, selected;
+
+	for (spinner = widget->child; spinner && spinner->type != _ui_widget_type_spinner_list; spinner = spinner->next)
+		;
+	if (!spinner || !(items = spinner->parameters.list.list_items))
+		return NONE;
+	selected = spinner->parameters.list.selected_index;
+	if (selected >= 0 && (word)selected < spinner->parameters.list.number_of_items)
+		was = items[selected];
+	count = (short)PIN(count, 0, PORT_SPINNER_PROFILES);
+	memmove(items, profiles, count * sizeof(long));
+	spinner->parameters.list.number_of_items = (word)count;
+	if (!count)
+	{
+		spinner->parameters.list.selected_index = 0;
+		return NONE;
+	}
+	selected = (short)PIN(selected, 0, count - 1);
+	for (index = 0; index < count; index++)
+	{
+		if (items[index] == keep)
+			break;
+	}
+	if (index == count)
+	{
+		for (index = 0; index < count && items[index] != was; index++)
+			;
+	}
+	if (index < count)
+		selected = index;
+	spinner->parameters.list.selected_index = selected;
+	return items[selected];
+}
+
 /* port: the PC version's events that this engine never sends (its custom
 activation), for the menus' functions (port/linux/game/menu_functions.c):
 runs the widget's handlers for the event, else the first descendant's that

@@ -2010,6 +2010,10 @@ def _lobby() -> list:
     return lines
 
 
+# (the top of a quarter's skin line, near its bottom)
+JOIN4_SKIN_Y = 128
+
+
 def _join4(base: str) -> list:
     """ADD PLAYER's screen: the Xbox's split screen profile select (its own
     widgets and bitmaps, ui\\shell\\...\\4way_profile_select), a quarter for
@@ -2063,9 +2067,13 @@ def _join4(base: str) -> list:
                       f'<on event="start" run="port join4 select" replace="{base}/join4_qtr_ready"/>',
                       f'<on event="b" run="port join4 leave" replace="{base}/join4_qtr_join"/>',
                       '<on event="back"/>',
+                      # (X: the player's next skin; Y: a new profile)
+                      '<on event="x" run="port join4 skin"/>',
+                      '<on event="y" run="port join4 new profile"/>',
                       f'<child widget="{xbox}qtr_screen_profile_color_pic"/>',
                       f'<child widget="{xbox}qtr_screen_profile_desc"/>',
-                      f'<child widget="{xbox}qtr_screen_profile_spinner"/>'])
+                      f'<child widget="{xbox}qtr_screen_profile_spinner"/>',
+                      f'<child widget="{base}/join4_qtr_skin" y="{JOIN4_SKIN_Y}"/>'])
     selected = [f'<child widget="{xbox}qtr_screen_profile_color_pic_selected"/>',
                 f'<child widget="{xbox}qtr_screen_profile_selected_text"/>',
                 f'<child widget="{xbox}qtr_screen_profile_selected_name"/>']
@@ -2076,7 +2084,9 @@ def _join4(base: str) -> list:
                       '<on event="start" run="port join4 done" back="true"/>',
                       f'<on event="b" run="port join4 unready" replace="{base}/join4_qtr_select"/>',
                       '<on event="back"/>',
-                      *selected])
+                      '<on event="x" run="port join4 skin"/>',
+                      *selected,
+                      f'<child widget="{base}/join4_qtr_skin" y="{JOIN4_SKIN_Y}"/>'])
     # (a player in the game already)
     lines += _widget(f"{base}/join4_qtr_playing",
                      [("width", 254), ("height", 164), ("bitmap", f"{xbox}4way_profile_border")],
@@ -2084,6 +2094,11 @@ def _join4(base: str) -> list:
                       '<on event="start" run="port join4 done" back="true"/>',
                       '<on event="b"/>', '<on event="back"/>',
                       *selected])
+    # (a choosing or selected quarter's skin, and what its X and Y do:
+    # menu_functions.c's join4_skin_show)
+    lines += _widget(f"{base}/join4_qtr_skin", [("type", "text"), ("width", 254), ("height", 32),
+                                                ("font", "ui\\small_ui"), ("color", "#FFFFFFFF"),
+                                                ("align", "center"), ("text_flags", "no_focus_test")], [])
     lines += _widget(f"{base}/join4_hint", [("type", "text"), ("width", 345), ("height", 24),
                                             ("font", "ui\\small_ui"), ("color", "#FF2896FF"),
                                             ("text_flags", "no_focus_test")], [])

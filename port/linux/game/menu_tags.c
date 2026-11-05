@@ -371,7 +371,7 @@ static char const *const port_function_names[] =
 	"port lobby open", "port lobby add player", "port lobby join", "port lobby leave",
 	"port join4 open", "port join4 back", "port join4 done", "port join4 playing", "port join4 opener",
 	"port join4 select", "port join4 join", "port join4 choosing", "port join4 leave", "port join4 ready",
-	"port join4 unready",
+	"port join4 unready", "port join4 new profile", "port join4 skin",
 	"port lobby player list initialize", "port lobby player choose",
 	"port lobby preview add", "port lobby preview leave",
 	/* (the gametype editor's: the Xbox's walk their rows by place, which the

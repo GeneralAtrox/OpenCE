@@ -34,6 +34,11 @@ short player_skins_local_choice(long local_player_index);
 /* a skin a network player says it has, as the host takes it: one of
 player_skin, else the Master Chief's */
 short player_skins_valid(short skin);
+/* the skin's name in the menus ("MASTER CHIEF") */
+wchar_t const *player_skins_name(short skin);
+/* the local player's next skin (direction 1) or previous (-1), chosen
+(multiplayer.skin_<n>, saved): the skin it has now */
+short player_skins_local_step(long local_player_index, short direction);
 /* the unit definition a player spawns as: its skin's biped, if this map
 has it, else default_definition_index */
 long player_skins_unit_definition(long player_index, long default_definition_index);

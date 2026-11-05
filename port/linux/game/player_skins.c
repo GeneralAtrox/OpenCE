@@ -52,6 +52,7 @@ What a skin's body cannot do (it is a campaign character's):
 #include <string.h>
 
 const char *config_string(const char *name);
+int config_write(char const *name, char const *value);
 void platform_log(char const *format, ...);
 
 /* ---------- constants */
@@ -97,6 +98,13 @@ static struct player_skin_definition const player_skin_definitions[NUMBER_OF_PLA
 	{ "flood_human", _skin_body_flood_human, { -1.f, 0.f, 0.f } },
 	{ "flood_elite", _skin_body_flood_elite, { -1.f, 0.f, 0.f } },
 	{ "hunter", _skin_body_hunter, { -1.f, 0.f, 0.f } },
+};
+
+/* their names in the menus (tools/port_settings.py's SKINS) */
+static wchar_t const *const player_skin_names[NUMBER_OF_PLAYER_SKINS] =
+{
+	L"MASTER CHIEF", L"ELITE", L"ELITE MINOR", L"ELITE MAJOR", L"ELITE SPEC OPS", L"ELITE ZEALOT",
+	L"STEALTH ELITE", L"FLOOD HUMAN", L"FLOOD ELITE", L"HUNTER",
 };
 
 static char const *const skin_body_bipeds[NUMBER_OF_SKIN_BODIES] =
@@ -251,6 +259,32 @@ short player_skins_local_choice(
 	}
 
 	return _player_skin_chief;
+}
+
+wchar_t const *player_skins_name(
+	short skin)
+{
+	return player_skin_names[skin >= 0 && skin < NUMBER_OF_PLAYER_SKINS ? skin : _player_skin_chief];
+}
+
+short player_skins_local_step(
+	long local_player_index,
+	short direction)
+{
+	short skin = player_skins_local_choice(local_player_index);
+	char name[32];
+
+	if (local_player_index < 0 || local_player_index >= MAXIMUM_SKIN_LOCAL_PLAYERS)
+		return skin;
+	skin = (short)((skin + direction % NUMBER_OF_PLAYER_SKINS + NUMBER_OF_PLAYER_SKINS) % NUMBER_OF_PLAYER_SKINS);
+	snprintf(name, sizeof(name), "multiplayer.skin_%ld", local_player_index + 1);
+	if (config_write(name, player_skin_definitions[skin].word))
+		platform_log("player skins: player %ld chose %s", local_player_index + 1, player_skin_definitions[skin].word);
+	else
+		platform_log("player skins: player %ld's choice of %s could not be saved", local_player_index + 1,
+			player_skin_definitions[skin].word);
+
+	return player_skins_local_choice(local_player_index);
 }
 
 short player_skins_valid(
