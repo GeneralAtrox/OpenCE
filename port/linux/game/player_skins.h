@@ -43,6 +43,9 @@ void player_skins_change_color(long player_index, real_rgb_color *change_color);
 /* the weapon label a unit's animation graph is searched for: a skin's
 body holds a weapon it has no animations for as one it has */
 char const *player_skins_weapon_label(long definition_index, char const *weapon_label);
+/* a player's unit was made (the host's) or attached (a client's): logged,
+if it is a skin's body or the player chose one */
+void player_skins_unit_spawned(long player_index, long unit_index);
 /* the map's tags have loaded or are going */
 void player_skins_tags_loaded(void);
 void player_skins_tags_unloaded(void);

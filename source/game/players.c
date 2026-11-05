@@ -1500,6 +1500,12 @@ static void player_spawn(
 						unit->object.owner_team_index = (short)player2->team_index;
 						unit->unit.player_index = player_index;
 						player2->unit_index = unit_index;
+						/* port: (logged: port/linux/game/player_skins.c) */
+						{
+							extern void player_skins_unit_spawned(long player_index, long unit_index);
+
+							player_skins_unit_spawned(player_index, unit_index);
+						}
 						unit_set_actively_controlled(unit_index, TRUE);
 						if (player2->local_player_index != NONE)
 						{
@@ -1567,6 +1573,12 @@ void network_player_attach_unit(
 	unit->object.owner_team_index = (short)player->team_index;
 	unit->unit.player_index = player_index;
 	player->unit_index = unit_index;
+	/* port: (logged: port/linux/game/player_skins.c) */
+	{
+		extern void player_skins_unit_spawned(long player_index, long unit_index);
+
+		player_skins_unit_spawned(player_index, unit_index);
+	}
 	/* port: Infection's role, which may have come before the unit */
 	infection_reconcile_player(player_index);
 	unit_set_actively_controlled(unit_index, TRUE);

@@ -9205,6 +9205,10 @@ static void handle_custom_starting_equipment(
 							}
 							else
 							{
+								extern void platform_log(char const *format, ...);
+
+								platform_log("player skins: a starting weapon the unit cannot hold is deleted
+");
 								object_delete(weapon_index);
 							}
 						}

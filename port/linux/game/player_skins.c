@@ -35,6 +35,7 @@ What a skin's body cannot do (it is a campaign character's):
 #include "cseries.h"
 #include "game/game_engine.h"
 #include "game/players.h"
+#include "units/units.h"
 #include "tag_files/tag_groups.h"
 
 #include "network_coop.h"
@@ -44,6 +45,7 @@ What a skin's body cannot do (it is a campaign character's):
 #include <string.h>
 
 const char *config_string(const char *name);
+void platform_log(char const *format, ...);
 
 /* ---------- constants */
 
@@ -250,6 +252,26 @@ char const *player_skins_weapon_label(
 	}
 
 	return weapon_label;
+}
+
+void player_skins_unit_spawned(
+	long player_index,
+	long unit_index)
+{
+	short skin;
+	short body;
+
+	if (player_index == NONE || unit_index == NONE || !player_skins_globals.loaded)
+		return;
+	skin = player_skin_of(player_index);
+	body = skin_body_of_definition(unit_get(unit_index)->definition_index);
+	if (skin == _player_skin_chief && body == NONE)
+		return;
+	platform_log("player skins: player %ld (%s) is %s
+", DATUM_INDEX_TO_ABSOLUTE_INDEX(player_index),
+		player_skin_definitions[skin].word, body == NONE ? "the map's own unit" : skin_body_bipeds[body]);
+
+	return;
 }
 
 void player_skins_tags_loaded(
