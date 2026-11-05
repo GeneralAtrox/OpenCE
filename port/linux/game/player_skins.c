@@ -267,8 +267,7 @@ void player_skins_unit_spawned(
 	body = skin_body_of_definition(unit_get(unit_index)->definition_index);
 	if (skin == _player_skin_chief && body == NONE)
 		return;
-	platform_log("player skins: player %ld (%s) is %s
-", DATUM_INDEX_TO_ABSOLUTE_INDEX(player_index),
+	platform_log("player skins: player %ld (%s) is %s", DATUM_INDEX_TO_ABSOLUTE_INDEX(player_index),
 		player_skin_definitions[skin].word, body == NONE ? "the map's own unit" : skin_body_bipeds[body]);
 
 	return;
