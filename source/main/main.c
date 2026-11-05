@@ -1372,8 +1372,8 @@ come first, as the Xbox's three players put player 1 across the top. */
 static long split_screen_rows(
 	long num_players)
 {
-	real frame_width = (real)(rasterizer_globals.reserved04.frame_bounds.x1 - rasterizer_globals.reserved04.frame_bounds.x0);
-	real frame_height = (real)(rasterizer_globals.reserved04.frame_bounds.y1 - rasterizer_globals.reserved04.frame_bounds.y0);
+	real frame_width = (real)(rasterizer_globals.reserved04.screen_bounds.x1 - rasterizer_globals.reserved04.screen_bounds.x0);
+	real frame_height = (real)(rasterizer_globals.reserved04.screen_bounds.y1 - rasterizer_globals.reserved04.screen_bounds.y0);
 	long rows, best_rows = 1;
 	real best = 0.0f;
 
@@ -1394,7 +1394,8 @@ static long split_screen_rows(
 	return best_rows;
 }
 
-/* port: the view's cell (in the frame's units) of a split screen of more than four */
+/* port: the view's cell (in the screen's units: the whole screen, so the rows
+are even and the dividers run edge to edge) of a split screen of more than four */
 void split_screen_cell(
 	long player_index,
 	long num_players,
@@ -1408,10 +1409,10 @@ void split_screen_cell(
 	long base = num_players / rows;
 	long longer = num_players % rows;
 	long row = 0, first = 0, columns = 0, column;
-	long x0 = rasterizer_globals.reserved04.frame_bounds.x0;
-	long y0 = rasterizer_globals.reserved04.frame_bounds.y0;
-	long width = rasterizer_globals.reserved04.frame_bounds.x1 - x0;
-	long height = rasterizer_globals.reserved04.frame_bounds.y1 - y0;
+	long x0 = rasterizer_globals.reserved04.screen_bounds.x0;
+	long y0 = rasterizer_globals.reserved04.screen_bounds.y0;
+	long width = rasterizer_globals.reserved04.screen_bounds.x1 - x0;
+	long height = rasterizer_globals.reserved04.screen_bounds.y1 - y0;
 
 	for (row = 0; row < rows; row++)
 	{
@@ -1481,20 +1482,17 @@ void compute_window_bounds(
 	{
 		long row, rows, column, columns;
 
-		split_screen_cell(player_index, num_players, safe_frame_bounds, &row, &rows, &column, &columns);
-		*pixel_bounds = *safe_frame_bounds;
-		safe_frame_bounds->x0 += column ? safe_frame_inset : 0;
-		safe_frame_bounds->x1 -= column + 1 < columns ? safe_frame_inset : 0;
-		safe_frame_bounds->y0 += row ? safe_frame_inset : 0;
-		safe_frame_bounds->y1 -= row + 1 < rows ? safe_frame_inset : 0;
-		if (!column)
-			pixel_bounds->x0 = rasterizer_globals.reserved04.screen_bounds.x0;
-		if (column + 1 == columns)
-			pixel_bounds->x1 = rasterizer_globals.reserved04.screen_bounds.x1;
-		if (!row)
-			pixel_bounds->y0 = rasterizer_globals.reserved04.screen_bounds.y0;
-		if (row + 1 == rows)
-			pixel_bounds->y1 = rasterizer_globals.reserved04.screen_bounds.y1;
+		split_screen_cell(player_index, num_players, pixel_bounds, &row, &rows, &column, &columns);
+		/* (the HUD keeps inside the screen's safe frame, and off the dividers) */
+		*safe_frame_bounds = *pixel_bounds;
+		safe_frame_bounds->x0 = (short)MAX(safe_frame_bounds->x0 + (column ? safe_frame_inset : 0),
+			rasterizer_globals.reserved04.frame_bounds.x0);
+		safe_frame_bounds->x1 = (short)MIN(safe_frame_bounds->x1 - (column + 1 < columns ? safe_frame_inset : 0),
+			rasterizer_globals.reserved04.frame_bounds.x1);
+		safe_frame_bounds->y0 = (short)MAX(safe_frame_bounds->y0 + (row ? safe_frame_inset : 0),
+			rasterizer_globals.reserved04.frame_bounds.y0);
+		safe_frame_bounds->y1 = (short)MIN(safe_frame_bounds->y1 - (row + 1 < rows ? safe_frame_inset : 0),
+			rasterizer_globals.reserved04.frame_bounds.y1);
 		return;
 	}
 	compute_subframe_counts(
