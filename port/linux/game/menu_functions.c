@@ -5859,11 +5859,14 @@ static boolean lobby_add_player(short controller)
 }
 
 /* port: controller 5 to 16's START in the lobby: it joins on the first
-profile no other player of this machine has (FALSE: no screen opens) */
+profile no other player of this machine has, made ("Player <n>") when every
+profile is taken (FALSE: no screen opens) */
 static boolean lobby_join_direct(short controller)
 {
-	short index, other;
+	short index, other, pass;
 
+	for (pass = 0; pass < 2; pass++)
+	{
 	profile_list_read(TRUE);
 	for (index = 0; index < profile_list.count; index++)
 	{
@@ -5884,6 +5887,17 @@ static boolean lobby_join_direct(short controller)
 				platform_log("menus: player %d could not join", controller + 1);
 			return FALSE;
 		}
+	}
+	if (!pass && profile_list.count < MAXIMUM_PROFILES)
+	{
+		wchar_t name[MAXIMUM_PLAYER_PROFILE_NAME_LENGTH];
+
+		usnprintf(name, NUMBEROF(name) - 1, L"Player %d", controller + 1);
+		name[NUMBEROF(name) - 1] = 0;
+		if (player_profile_new(controller, name) == NONE)
+			break;
+		platform_log("menus: made profile \"Player %d\" for controller %d", controller + 1, controller + 1);
+	}
 	}
 	display_error_text_deferred(L"Every profile is in use.\r\nMake another in PROFILES\r\nfor this player.", NONE);
 	return campaign_fail();
@@ -6472,6 +6486,9 @@ static boolean preview_add(struct widget_instance *widget, short controller, boo
 		display_error_text_deferred(L"The game is full.", NONE);
 		return campaign_fail();
 	}
+	/* port: (controllers 5 to 16 join at once, as in the lobby) */
+	if (controller >= 4)
+		return lobby_join_direct(controller);
 	lobby_join.controller = controller;
 	event_manager_post_button(0, BUTTON_Y);
 	return FALSE;
