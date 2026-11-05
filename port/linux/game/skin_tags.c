@@ -504,9 +504,13 @@ static boolean import_retry(
 
 		if (import->skipped & (1UL << root))
 			continue;
-		import->skipped |= 1UL << root;
-		if ((import->skipped & SKIN_ROOTS_ALL) == SKIN_ROOTS_ALL)
+		if (((import->skipped | (1UL << root)) & SKIN_ROOTS_ALL) == SKIN_ROOTS_ALL)
+		{
+			platform_log("player skins: %s has %lu bytes free in its tag cache, too few for %s (%ld tags, %lu bytes copied)",
+				map_name_text, import->out_limit, skin_root_bipeds[root], import->order_count, import->out_used);
 			return FALSE;
+		}
+		import->skipped |= 1UL << root;
 		platform_log("player skins: no room in %s for every body: %s is left out", map_name_text,
 			skin_root_bipeds[root]);
 		import->order_count = 0;
