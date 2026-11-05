@@ -26,7 +26,9 @@ What a skin's body cannot do (it is a campaign character's):
 - a Hunter has only its fuel rod cannon, and picks up nothing else; the
   cannon never runs out, as an actor's, and a player's pauses to reload
   after HUNTER_SHOTS_PER_RELOAD shots; it strikes with its shield (its
-  biped's melee damage, as the cannon has none);
+  biped's melee damage, as the cannon has none, in an unarmed blow's
+  time, with its body's melee animation); it must be held 1.25 seconds
+  to charge each shot, as an actor's is;
 - the Flood and the Hunter cannot drive or ride a vehicle (their animations
   have no seats in one), nor the Flood throw a grenade;
 - a stealth Elite is not camouflaged (it is as any player is, with the
@@ -340,6 +342,12 @@ static short player_skin_body_of_unit(
 		return NONE;
 
 	return skin_body_of_definition(unit->definition_index);
+}
+
+boolean player_skins_unit_is_body(
+	long unit_index)
+{
+	return player_skin_body_of_unit(unit_index) != NONE;
 }
 
 boolean player_skins_weapon_fire(

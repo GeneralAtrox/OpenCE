@@ -50,6 +50,8 @@ void player_skins_unit_spawned(long player_index, long unit_index);
 player Hunter's cannon reloads; else the shot is counted (and logged) if
 the unit is a player's skin body */
 boolean player_skins_weapon_fire(long weapon_index, long unit_index);
+/* whether unit_index is a player's skin body */
+boolean player_skins_unit_is_body(long unit_index);
 /* a player's unit strikes a blow: counted and logged if a skin's body */
 void player_skins_unit_melee(long unit_index);
 /* the map's tags have loaded or are going */

@@ -4390,6 +4390,15 @@ boolean biped_update(
 							_weapon_first_person_animation_time_private_key_frame,
 							_first_person_weapon_animation_melee,
 							NONE);
+					/* port: a weapon with no first-person blow (an actor's,
+					in a player's skin body's hands: port/linux/game/
+					player_skins.c) strikes in the unarmed blow's time, as
+					it would not strike at all */
+					if (biped->biped.player_melee_ticks <= 0)
+					{
+						biped->biped.player_melee_ticks = UNARMED_MELEE_TICKS;
+						biped->biped.player_melee_attack_tick = UNARMED_MELEE_TICKS / 2;
+					}
 					}
 
 					melee_speedup_ticks = biped->biped.player_melee_ticks >> 2;

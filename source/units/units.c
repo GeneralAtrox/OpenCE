@@ -3522,6 +3522,20 @@ void unit_animation_start_action(
 				animation_index = NONE;
 			}
 		}
+		/* port: a player's skin body whose weapon type has no melee (an
+		actor's weapon: port/linux/game/player_skins.c) strikes with its
+		weapon class's melee attack, as an actor does */
+		if (animation_index == NONE && action_index == 7 &&
+			_unit_weapon_class_animation_melee_attack < weapon_class->animations.count)
+		{
+			extern boolean player_skins_unit_is_body(long unit_index);
+
+			if (player_skins_unit_is_body(unit_index))
+			{
+				animation_index = animation_graph_animation_index_get(
+					&weapon_class->animations)[_unit_weapon_class_animation_melee_attack].animation_index;
+			}
+		}
 		/* port: a seat with no reload borrows the standing one's */
 		if (animation_index == NONE &&
 			(weapon_type_animation_index == 0 || weapon_type_animation_index == 1) &&
