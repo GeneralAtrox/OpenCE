@@ -2003,6 +2003,19 @@ static void netgame_prejoin_players(
 			}
 		}
 
+		{
+			/* port: (which of this machine's players are to join, logged as it
+			changes: split screen of up to 16) */
+			extern void platform_log(char const *format, ...);
+			static unsigned long logged_mask = 0;
+			unsigned long mask = 0;
+
+			for (state_or_index.index = 0; (short)state_or_index.index < MAXIMUM_LOCAL_PLAYERS; state_or_index.index++)
+				mask |= local_player_wants_to_join[(short)state_or_index.index] ? 1UL << state_or_index.index : 0;
+			if (mask != logged_mask)
+				platform_log("menus: players to join %04lx", mask);
+			logged_mask = mask;
+		}
 		for (state_or_index.index = 0; (short)state_or_index.index < MAXIMUM_LOCAL_PLAYERS; state_or_index.index++)
 		{
 			if (local_player_wants_to_join[(short)state_or_index.index] &&

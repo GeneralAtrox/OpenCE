@@ -5885,6 +5885,8 @@ static boolean lobby_join_direct(short controller)
 				player_ui_set_active_player_profile(controller, profile_list.indices[index], &profile);
 			if (!ui_widget_port_multiplayer_player(controller, profile_list.indices[index]))
 				platform_log("menus: player %d could not join", controller + 1);
+			platform_log("menus: player %d joins (%s)", controller + 1,
+				player_ui_local_player_wants_to_play_multiplayer(controller) ? "to play" : "not marked");
 			return FALSE;
 		}
 	}
