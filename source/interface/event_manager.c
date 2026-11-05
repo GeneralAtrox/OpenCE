@@ -328,26 +328,6 @@ void event_manager_update(
 	{
 		boolean posted = FALSE;
 
-		/* port: (diagnostic) a controller's arrival and its presses' first frame */
-		{
-			extern void platform_log(char const *format, ...);
-			static unsigned long had_pad;
-			static unsigned long held[MAXIMUM_GAMEPADS];
-			unsigned long down = 0;
-			struct gamepad_state const *peek = input_has_gamepad(gamepad_index) ? input_get_gamepad_state(gamepad_index) : NULL;
-			short peek_button;
-
-			if (((had_pad >> gamepad_index) & 1) != (input_has_gamepad(gamepad_index) ? 1UL : 0UL))
-			{
-				had_pad ^= 1UL << gamepad_index;
-				platform_log("events: controller %d %s", gamepad_index + 1, (had_pad >> gamepad_index) & 1 ? "here" : "gone");
-			}
-			for (peek_button = 0; peek && peek_button < NUMBER_OF_GAMEPAD_BUTTONS && peek_button < 32; peek_button++)
-				down |= peek->buttons[peek_button] ? 1UL << peek_button : 0;
-			if (down & ~held[gamepad_index])
-				platform_log("events: controller %d presses %08lx", gamepad_index + 1, down & ~held[gamepad_index]);
-			held[gamepad_index] = down;
-		}
 		if (input_has_gamepad(gamepad_index))
 		{
 			struct gamepad_state const *state = input_get_gamepad_state(gamepad_index);

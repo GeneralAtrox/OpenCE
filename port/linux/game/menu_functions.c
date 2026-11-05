@@ -5858,51 +5858,71 @@ static boolean lobby_add_player(short controller)
 	return TRUE;
 }
 
-/* port: controller 5 to 16's START in the lobby: it joins on the first
-profile no other player of this machine has, made ("Player <n>") when every
-profile is taken (FALSE: no screen opens) */
-static boolean lobby_join_direct(short controller)
+/* whether no other player of this machine has the profile */
+static boolean lobby_profile_free(short controller, long profile)
 {
-	short index, other, pass;
+	short other;
 
-	for (pass = 0; pass < 2; pass++)
+	for (other = 0; other < MAXIMUM_LOCAL_PLAYERS; other++)
 	{
-	profile_list_read(TRUE);
-	for (index = 0; index < profile_list.count; index++)
-	{
-		boolean taken = FALSE;
-
-		for (other = 0; other < MAXIMUM_LOCAL_PLAYERS; other++)
+		if (other != controller && lobby_controller_playing(other) &&
+			player_ui_get_active_player_profile_index(other) == profile)
 		{
-			taken |= other != controller && lobby_controller_playing(other) &&
-				player_ui_get_active_player_profile_index(other) == profile_list.indices[index];
-		}
-		if (!taken)
-		{
-			struct player_profile profile;
-
-			if (player_profile_get(profile_list.indices[index], &profile))
-				player_ui_set_active_player_profile(controller, profile_list.indices[index], &profile);
-			if (!ui_widget_port_multiplayer_player(controller, profile_list.indices[index]))
-				platform_log("menus: player %d could not join", controller + 1);
-			platform_log("menus: player %d joins (%s)", controller + 1,
-				player_ui_local_player_wants_to_play_multiplayer(controller) ? "to play" : "not marked");
 			return FALSE;
 		}
 	}
-	if (!pass && profile_list.count < MAXIMUM_PROFILES)
-	{
-		wchar_t name[MAXIMUM_PLAYER_PROFILE_NAME_LENGTH];
+	return TRUE;
+}
 
-		usnprintf(name, NUMBEROF(name) - 1, L"Player %d", controller + 1);
-		name[NUMBEROF(name) - 1] = 0;
-		if (player_profile_new(controller, name) == NONE)
-			break;
-		platform_log("menus: made profile \"Player %d\" for controller %d", controller + 1, controller + 1);
+static boolean wide_equal(wchar_t const *a, wchar_t const *b)
+{
+	while (*a && *a == *b)
+	{
+		a++;
+		b++;
 	}
+	return *a == *b;
+}
+
+/* port: controller 5 to 16's START in the lobby: it joins on its own
+profile, "Player <n>", made when there is none and room for it; else the
+first profile no other player of this machine has (FALSE: no screen opens) */
+static boolean lobby_join_direct(short controller)
+{
+	wchar_t name[MAXIMUM_PLAYER_PROFILE_NAME_LENGTH];
+	long chosen = NONE;
+	short index, pass;
+
+	usnprintf(name, NUMBEROF(name) - 1, L"Player %d", controller + 1);
+	name[NUMBEROF(name) - 1] = 0;
+	for (pass = 0; pass < 3 && chosen == NONE; pass++)
+	{
+		if (pass == 1 && profile_list.count < MAXIMUM_PROFILES && player_profile_new(controller, name) != NONE)
+			platform_log("menus: made profile \"Player %d\" for controller %d", controller + 1, controller + 1);
+		profile_list_read(TRUE);
+		for (index = 0; index < profile_list.count && chosen == NONE; index++)
+		{
+			struct player_profile profile;
+
+			if (lobby_profile_free(controller, profile_list.indices[index]) &&
+				player_profile_get(profile_list.indices[index], &profile) &&
+				(pass == 2 || wide_equal(profile.player_name, name)))
+			{
+				chosen = profile_list.indices[index];
+				player_ui_set_active_player_profile(controller, chosen, &profile);
+			}
+		}
 	}
-	display_error_text_deferred(L"Every profile is in use.\r\nMake another in PROFILES\r\nfor this player.", NONE);
-	return campaign_fail();
+	if (chosen == NONE)
+	{
+		display_error_text_deferred(L"Every profile is in use.\r\nMake another in PROFILES\r\nfor this player.", NONE);
+		return campaign_fail();
+	}
+	if (!ui_widget_port_multiplayer_player(controller, chosen))
+		platform_log("menus: player %d could not join", controller + 1);
+	else
+		platform_log("menus: player %d joins", controller + 1);
+	return FALSE;
 }
 
 /* "port lobby join" (START): a controller not playing joins, choosing its
