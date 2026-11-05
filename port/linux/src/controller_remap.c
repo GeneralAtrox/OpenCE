@@ -51,8 +51,11 @@ static int valid_button(int button)
 char const *controller_remap_setting(short port)
 {
     static char const *const settings[] = {"input.controller_p1", "input.controller_p2",
-        "input.controller_p3", "input.controller_p4"};
-    return port >= 0 && port < 4 ? settings[port] : NULL;
+        "input.controller_p3", "input.controller_p4", "input.controller_p5", "input.controller_p6",
+        "input.controller_p7", "input.controller_p8", "input.controller_p9", "input.controller_p10",
+        "input.controller_p11", "input.controller_p12", "input.controller_p13", "input.controller_p14",
+        "input.controller_p15", "input.controller_p16"};
+    return port >= 0 && port < 16 ? settings[port] : NULL;
 }
 
 int controller_remap_parse(char const *text, unsigned char *buttons)
@@ -109,13 +112,13 @@ void controller_remap_format(unsigned char const *buttons, char *text, unsigned 
 int controller_remap_read(short port, unsigned char *buttons)
 {
     static unsigned long read_at = (unsigned long)-1;
-    static unsigned char layouts[4][CONTROLLER_REMAP_ACTIONS];
-    static int valid[4];
+    static unsigned char layouts[16][CONTROLLER_REMAP_ACTIONS];
+    static int valid[16];
     int i;
-    if (port < 0 || port >= 4) return 0;
+    if (port < 0 || port >= 16) return 0;
     if (read_at != config_changes())
     {
-        for (i = 0; i < 4; i++)
+        for (i = 0; i < 16; i++)
         {
             char const *text = config_string(controller_remap_setting((short)i));
             valid[i] = controller_remap_parse(text, layouts[i]);

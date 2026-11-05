@@ -295,7 +295,7 @@ struct chat_line
 	short color;
 	short channel;
 	/* the local players who hear it, a bit for each (their views show it) */
-	short hearers;
+	long hearers;
 	/* (system_milliseconds) */
 	unsigned long time;
 };
@@ -1213,22 +1213,22 @@ static struct chat_line *chat_new_line(
 }
 
 /* the local players, a bit for each */
-static short chat_local_players(
+static long chat_local_players(
 	void)
 {
-	short players = 0;
+	long players = 0;
 	short local_player_index;
 
 	for (local_player_index = local_player_get_next(NONE); local_player_index != NONE;
 		local_player_index = local_player_get_next(local_player_index))
 	{
 		if (local_player_index >= 0 && local_player_index < MAXIMUM_LOCAL_PLAYERS)
-			players |= (short)FLAG(local_player_index);
+			players |= (long)FLAG(local_player_index);
 	}
 	return players;
 }
 
-static short chat_local_hearers(struct player_datum const *sender, short player_index, short channel);
+static long chat_local_hearers(struct player_datum const *sender, short player_index, short channel);
 
 /* a line shown, from a player (absolute index) */
 static void chat_add_line(
@@ -1294,14 +1294,14 @@ static long chat_player_vehicle(
 channel, a bit for each: its sender, and those chat_hears says; every local
 player when none does (the host found this machine hears it, whatever the
 players' vehicles were here a moment before) */
-static short chat_local_hearers(
+static long chat_local_hearers(
 	struct player_datum const *sender,
 	short player_index,
 	short channel)
 {
 	boolean has_teams = game_engine_has_teams();
 	long sender_vehicle = chat_player_vehicle(sender);
-	short hearers = 0;
+	long hearers = 0;
 	short local_player_index;
 
 	for (local_player_index = local_player_get_next(NONE); local_player_index != NONE;
@@ -1314,7 +1314,7 @@ static short chat_local_hearers(
 				chat_hears(channel, has_teams, sender->team_index, player_get(local_index)->team_index,
 					sender_vehicle, chat_player_vehicle(player_get(local_index)))))
 		{
-			hearers |= (short)FLAG(local_player_index);
+			hearers |= (long)FLAG(local_player_index);
 		}
 	}
 	return hearers ? hearers : chat_local_players();

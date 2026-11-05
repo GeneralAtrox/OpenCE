@@ -20,7 +20,8 @@ enum
 	_player_powerup_active_camouflage = 0,
 	_player_powerup_full_spectrum_vision,
 	NUMBER_OF_PLAYER_POWERUPS,
-	MAXIMUM_LOCAL_PLAYERS = 4,
+	/* port: 16 players split one screen (the Xbox's 4) */
+	MAXIMUM_LOCAL_PLAYERS = 16,
 	_local_player_triggered_switch_none = NONE,
 };
 
@@ -132,33 +133,28 @@ struct players_globals
 	short pending_teleport_starting_location_index;
 	short respawn_failure;
 	boolean respawn_failed;
-	union
-	{
-		byte bsp_switch_state;
-		struct
-		{
-			char local_player_triggered_switch : 4;
-			byte bsp_check_recursive_switch_ticks : 4;
-		};
-	};
+	/* port: the Xbox kept both in one byte, 4 bits each; a local player
+	index of 16 players needs a byte of its own */
+	char local_player_triggered_switch;
+	byte bsp_check_recursive_switch_ticks;
 	unsigned long combined_pvs[16];
 	unsigned long combined_pvs_local[16];
 };
 
 typedef char players_globals_local_player_count_offset_assert[
-	offsetof(struct players_globals, local_player_count) == 0x24 ? 1 : -1];
+	(MAXIMUM_LOCAL_PLAYERS != 4 || (offsetof(struct players_globals, local_player_count) == 0x24)) ? 1 : -1];
 typedef char players_globals_respawn_failure_offset_assert[
-	offsetof(struct players_globals, respawn_failure) == 0x2C ? 1 : -1];
+	(MAXIMUM_LOCAL_PLAYERS != 4 || (offsetof(struct players_globals, respawn_failure) == 0x2C)) ? 1 : -1];
 typedef char players_globals_all_dead_offset_assert[
-	offsetof(struct players_globals, all_dead) == 0x28 ? 1 : -1];
+	(MAXIMUM_LOCAL_PLAYERS != 4 || (offsetof(struct players_globals, all_dead) == 0x28)) ? 1 : -1];
 typedef char players_globals_input_disabled_offset_assert[
-	offsetof(struct players_globals, input_disabled) == 0x29 ? 1 : -1];
+	(MAXIMUM_LOCAL_PLAYERS != 4 || (offsetof(struct players_globals, input_disabled) == 0x29)) ? 1 : -1];
 typedef char players_globals_combined_pvs_offset_assert[
-	offsetof(struct players_globals, combined_pvs) == 0x30 ? 1 : -1];
+	(MAXIMUM_LOCAL_PLAYERS != 4 || (offsetof(struct players_globals, combined_pvs) == 0x30)) ? 1 : -1];
 typedef char players_globals_combined_pvs_local_offset_assert[
-	offsetof(struct players_globals, combined_pvs_local) == 0x70 ? 1 : -1];
+	(MAXIMUM_LOCAL_PLAYERS != 4 || (offsetof(struct players_globals, combined_pvs_local) == 0x70)) ? 1 : -1];
 typedef char players_globals_size_assert[
-	sizeof(struct players_globals) == 0xB0 ? 1 : -1];
+	(MAXIMUM_LOCAL_PLAYERS != 4 || (sizeof(struct players_globals) == 0xB0)) ? 1 : -1];
 
 typedef char player_datum_team_index_offset_assert[
 	offsetof(struct player_datum, team_index) == 0x20 ? 1 : -1];

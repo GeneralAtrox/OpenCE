@@ -4,7 +4,7 @@ XINPUT_SDL.C
 Xbox controllers and the debug keyboard for the Linux build.
 
 Port 0 is always connected: it is the keyboard and mouse, merged with the
-first SDL gamepad when one is present. Further SDL gamepads take ports 1-3.
+first SDL gamepad when one is present. Further SDL gamepads take ports 1-15.
 
 In the game the keyboard and mouse are a control scheme of their own
 (port/linux/include/halo_keyboard.h): config.toml's [controls] bind each of
@@ -53,7 +53,8 @@ extern unsigned char network_aim_assist_block_mouse(void);
 #include <stdlib.h>
 #include <string.h>
 
-#define PORT_COUNT 4
+/* port: 16 local players, a port each (the Xbox's 4) */
+#define PORT_COUNT 16
 #define VK_OEM_3_BACKQUOTE 0xc0
 
 /* ---------- game hooks */

@@ -681,7 +681,8 @@ extern struct cached_variant_profile_entry cached_variant_profile[3];
 /* Controller-color bitmap frame indices for each local player, selected by
    team. The first table is ordered [no teams, team 1, team 0] for the networked
    pregame screen; the second is [no teams, team 0, team 1] for splitscreen. */
-static byte const local_player_controller_bitmap_frames[2][MAXIMUM_LOCAL_PLAYERS][3] =
+/* (port: players 5 to 16 take the colours of 1 to 4 again) */
+static byte const local_player_controller_bitmap_frames[2][4][3] =
 {
 	{{3, 4, 5}, {6, 7, 8}, {9, 10, 11}, {12, 13, 14}},
 	{{3, 5, 4}, {6, 8, 7}, {9, 11, 10}, {12, 14, 13}}
@@ -1558,17 +1559,17 @@ static void network_pregame_status_screen_update(
 					{
 					case _team_red:
 						controller_bitmap->animation.current_frame_index =
-							local_player_controller_bitmap_frames[0][local_player_index][2];
+							local_player_controller_bitmap_frames[0][local_player_index & 3][2];
 						team_list->parameters.list.selected_list_item_index = 0;
 						break;
 					case _team_blue:
 						controller_bitmap->animation.current_frame_index =
-							local_player_controller_bitmap_frames[0][local_player_index][1];
+							local_player_controller_bitmap_frames[0][local_player_index & 3][1];
 						team_list->parameters.list.selected_list_item_index = 1;
 						break;
 					default:
 						controller_bitmap->animation.current_frame_index =
-							local_player_controller_bitmap_frames[0][local_player_index][0];
+							local_player_controller_bitmap_frames[0][local_player_index & 3][0];
 						team_list->parameters.list.selected_list_item_index = 2;
 						break;
 					}
@@ -1692,7 +1693,7 @@ static void network_pregame_status_screen_update(
 						else if (!game->variant.universal_variant.teams)
 						{
 							player_widget->animation.current_frame_index =
-								local_player_controller_bitmap_frames[0][local_player_index][0];
+								local_player_controller_bitmap_frames[0][local_player_index & 3][0];
 						}
 						else
 						{
@@ -1701,15 +1702,15 @@ static void network_pregame_status_screen_update(
 							{
 							case _team_red:
 								player_widget->animation.current_frame_index =
-									local_player_controller_bitmap_frames[0][local_player_index][2];
+									local_player_controller_bitmap_frames[0][local_player_index & 3][2];
 								break;
 							case _team_blue:
 								player_widget->animation.current_frame_index =
-									local_player_controller_bitmap_frames[0][local_player_index][1];
+									local_player_controller_bitmap_frames[0][local_player_index & 3][1];
 								break;
 							default:
 								player_widget->animation.current_frame_index =
-									local_player_controller_bitmap_frames[0][local_player_index][0];
+									local_player_controller_bitmap_frames[0][local_player_index & 3][0];
 								break;
 							}
 						}
@@ -1940,17 +1941,17 @@ static void splitscreen_pregame_status_screen_update(
 					{
 					case _team_red:
 						controller_bitmap->animation.current_frame_index =
-							local_player_controller_bitmap_frames[1][local_player_index][1];
+							local_player_controller_bitmap_frames[1][local_player_index & 3][1];
 						team_list->parameters.list.selected_list_item_index = 0;
 						break;
 					case _team_blue:
 						controller_bitmap->animation.current_frame_index =
-							local_player_controller_bitmap_frames[1][local_player_index][2];
+							local_player_controller_bitmap_frames[1][local_player_index & 3][2];
 						team_list->parameters.list.selected_list_item_index = 1;
 						break;
 					default:
 						controller_bitmap->animation.current_frame_index =
-							local_player_controller_bitmap_frames[1][local_player_index][0];
+							local_player_controller_bitmap_frames[1][local_player_index & 3][0];
 						team_list->parameters.list.selected_list_item_index = 0;
 						break;
 					}
@@ -1970,7 +1971,7 @@ static void netgame_prejoin_players(
 		long index;
 		short client_state_data;
 	} state_or_index;
-	boolean local_player_wants_to_join[4];
+	boolean local_player_wants_to_join[MAXIMUM_LOCAL_PLAYERS];
 
 	(void)widget;
 	if (client &&
@@ -1983,7 +1984,7 @@ static void netgame_prejoin_players(
 			0x614,
 			game);
 
-		for (state_or_index.index = 0; (short)state_or_index.index < 4; state_or_index.index++)
+		for (state_or_index.index = 0; (short)state_or_index.index < MAXIMUM_LOCAL_PLAYERS; state_or_index.index++)
 		{
 			local_player_wants_to_join[(short)state_or_index.index] =
 				player_ui_local_player_wants_to_play_multiplayer((short)state_or_index.index);
@@ -2002,7 +2003,7 @@ static void netgame_prejoin_players(
 			}
 		}
 
-		for (state_or_index.index = 0; (short)state_or_index.index < 4; state_or_index.index++)
+		for (state_or_index.index = 0; (short)state_or_index.index < MAXIMUM_LOCAL_PLAYERS; state_or_index.index++)
 		{
 			if (local_player_wants_to_join[(short)state_or_index.index] &&
 				!network_game_client_add_player(client, (short)state_or_index.index))
@@ -2121,7 +2122,7 @@ static void get_active_player_profile_display_name(
 	match_vassert(
 		"c:\\halo\\SOURCE\\interface\\ui_widget_game_data_input_functions.c",
 		0x9EE,
-		widget->local_player_index >= 0 && widget->local_player_index < 4,
+		widget->local_player_index >= 0 && widget->local_player_index < MAXIMUM_LOCAL_PLAYERS,
 		"profile display name requires a valid local player index");
 
 	player_ui_get_active_player_profile(widget->local_player_index, &profile);
@@ -2151,7 +2152,7 @@ static void get_editable_player_profile_display_name(
 	match_vassert(
 		"c:\\halo\\SOURCE\\interface\\ui_widget_game_data_input_functions.c",
 		0xA00,
-		widget->local_player_index >= 0 && widget->local_player_index < 4,
+		widget->local_player_index >= 0 && widget->local_player_index < MAXIMUM_LOCAL_PLAYERS,
 		"profile display name requires a valid local player index");
 
 	profile = player_ui_get_edit_player_profile();
@@ -2184,7 +2185,7 @@ static void get_editable_playlist_profile_display_name(
 	match_vassert(
 		"c:\\halo\\SOURCE\\interface\\ui_widget_game_data_input_functions.c",
 		0xA15,
-		widget->local_player_index >= 0 && widget->local_player_index < 4,
+		widget->local_player_index >= 0 && widget->local_player_index < MAXIMUM_LOCAL_PLAYERS,
 		"profile display name requires a valid local player index");
 
 	profile = player_ui_get_edit_playlist_profile();
@@ -2214,7 +2215,7 @@ static void get_active_player_profile_color_index(
 	match_vassert(
 		"c:\\halo\\SOURCE\\interface\\ui_widget_game_data_input_functions.c",
 		0xA2D,
-		widget->local_player_index >= 0 && widget->local_player_index < 4,
+		widget->local_player_index >= 0 && widget->local_player_index < MAXIMUM_LOCAL_PLAYERS,
 		"profile color picture requires a valid local player index");
 
 	player_ui_get_active_player_profile(widget->local_player_index, &profile);

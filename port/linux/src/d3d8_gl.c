@@ -484,6 +484,104 @@ long halo_screen_ui_offset_current(void)
 	return ui_offset;
 }
 
+/* ---------- more than four views (16 local players)
+
+While a view's HUD and menus draw (render.c), the game lays them out in a
+viewport a quarter of the screen large (whose HUD the tags already scale for
+split screen) from the view's corner; this draws that viewport scale times
+as large about the corner, which puts it exactly over the view. Pre-transformed
+vertices are converted to the viewport's normalised coordinates by the
+shaders, so only the GL viewport, the scissor and clears change. */
+static struct
+{
+	BOOL active;
+	float scale;
+	float corner[2];
+	D3DVIEWPORT8 saved;
+	/* the view itself, in the screen's units: nothing is drawn outside it */
+	float clip[4];
+} view_scale;
+
+static float view_scaled(float coordinate, int axis)
+{
+	return view_scale.active ? view_scale.corner[axis] + (coordinate - view_scale.corner[axis]) * view_scale.scale : coordinate;
+}
+
+void halo_screen_view_scale_begin(float scale)
+{
+	if (view_scale.active || !(scale > 0.0f && scale < 1.0f))
+		return;
+	view_scale.saved = device.viewport;
+	view_scale.corner[0] = (float)device.viewport.X;
+	view_scale.corner[1] = (float)device.viewport.Y;
+	view_scale.clip[0] = (float)device.viewport.X;
+	view_scale.clip[1] = (float)device.viewport.Y;
+	view_scale.clip[2] = (float)(device.viewport.X + device.viewport.Width);
+	view_scale.clip[3] = (float)(device.viewport.Y + device.viewport.Height);
+	view_scale.scale = scale;
+	device.viewport.Width = (DWORD)((float)device.viewport.Width / scale + 0.5f);
+	device.viewport.Height = (DWORD)((float)device.viewport.Height / scale + 0.5f);
+	view_scale.active = TRUE;
+	viewport_update_constants();
+}
+
+void halo_screen_view_scale_end(void)
+{
+	if (!view_scale.active)
+		return;
+	view_scale.active = FALSE;
+	device.viewport = view_scale.saved;
+	viewport_update_constants();
+}
+
+/* ---------- frame times (HALO_FRAME_LOG=<seconds>): every that many seconds
+the log gets the frames' count and the 50th and 99th percentile and longest
+time between presents, in milliseconds (16-player performance runs) */
+static int frame_time_compare(const void *left, const void *right)
+{
+	float a = *(const float *)left, b = *(const float *)right;
+
+	return a < b ? -1 : a > b;
+}
+
+static void frame_times_note(void)
+{
+	static double every = -1.0, last = 0.0, start = 0.0, frequency = 0.0;
+	static float times[16384], sorted[16384];
+	static long count = 0;
+	double now;
+
+	if (every < 0.0)
+	{
+		const char *value = getenv("HALO_FRAME_LOG");
+
+		every = value ? atof(value) : 0.0;
+		frequency = (double)SDL_GetPerformanceFrequency();
+	}
+	if (every <= 0.0)
+		return;
+	now = (double)SDL_GetPerformanceCounter() / frequency;
+	if (last > 0.0 && count < (long)(sizeof(times) / sizeof(times[0])))
+		times[count++] = (float)((now - last) * 1000.0);
+	last = now;
+	if (start <= 0.0)
+		start = now;
+	if (now - start >= every && count > 0)
+	{
+		double total = 0.0;
+		long index;
+
+		memcpy(sorted, times, (size_t)count * sizeof(float));
+		qsort(sorted, (size_t)count, sizeof(float), frame_time_compare);
+		for (index = 0; index < count; index++)
+			total += sorted[index];
+		platform_log("frame times: %ld frames, %.1f a second, p50 %.2f ms, p99 %.2f ms, max %.2f ms",
+			count, count / total * 1000.0, sorted[count / 2], sorted[(count * 99) / 100], sorted[count - 1]);
+		count = 0;
+		start = now;
+	}
+}
+
 /* ---------- state the XDK header's inline functions read and write */
 
 DWORD D3D__RenderState[D3DRS_MAX];
@@ -4595,10 +4693,10 @@ static void apply_raster_state(BOOL has_depth)
 	unsigned char color_mask;
 	BOOL depth_test = has_depth && rs[D3DRS_ZENABLE];
 
-	viewport[0] = target_pixel((float)device.viewport.X, 0);
-	viewport[1] = target_pixel((float)device.viewport.Y, 1);
-	viewport[2] = target_pixel((float)(device.viewport.X + device.viewport.Width), 0) - viewport[0];
-	viewport[3] = target_pixel((float)(device.viewport.Y + device.viewport.Height), 1) - viewport[1];
+	viewport[0] = target_pixel(view_scaled((float)device.viewport.X, 0), 0);
+	viewport[1] = target_pixel(view_scaled((float)device.viewport.Y, 1), 1);
+	viewport[2] = target_pixel(view_scaled((float)(device.viewport.X + device.viewport.Width), 0), 0) - viewport[0];
+	viewport[3] = target_pixel(view_scaled((float)(device.viewport.Y + device.viewport.Height), 1), 1) - viewport[1];
 	if (memcmp(gl_state.viewport, viewport, sizeof(viewport)))
 	{
 		memcpy(gl_state.viewport, viewport, sizeof(viewport));
@@ -4609,6 +4707,20 @@ static void apply_raster_state(BOOL has_depth)
 	what keeps a split-screen window's geometry from bleeding across the divider */
 	/* (glScissor takes the corner and the size, as glViewport does) */
 	memcpy(scissor, viewport, sizeof(scissor));
+	/* (more than four views: never outside the view, view_scale) */
+	if (view_scale.active)
+	{
+		GLint x0 = target_pixel(view_scale.clip[0], 0), y0 = target_pixel(view_scale.clip[1], 1);
+		GLint x1 = target_pixel(view_scale.clip[2], 0), y1 = target_pixel(view_scale.clip[3], 1);
+		GLint left = scissor[0] > x0 ? scissor[0] : x0, top = scissor[1] > y0 ? scissor[1] : y0;
+		GLint right = scissor[0] + scissor[2] < x1 ? scissor[0] + scissor[2] : x1;
+		GLint bottom = scissor[1] + scissor[3] < y1 ? scissor[1] + scissor[3] : y1;
+
+		scissor[0] = left;
+		scissor[1] = top;
+		scissor[2] = right > left ? right - left : 0;
+		scissor[3] = bottom > top ? bottom - top : 0;
+	}
 	if (memcmp(gl_state.scissor, scissor, sizeof(scissor)))
 	{
 		memcpy(gl_state.scissor, scissor, sizeof(scissor));
@@ -7148,12 +7260,12 @@ void WINAPI D3DDevice_Clear(DWORD count, CONST D3DRECT *rectangles, DWORD flags,
 	{
 		/* the NV2A clips a viewport-less clear to the viewport, which is what
 		keeps a split-screen window's clear from wiping the other window */
-		GLint x0 = target_pixel((float)device.viewport.X, 0);
-		GLint y0 = target_pixel((float)device.viewport.Y, 1);
+		GLint x0 = target_pixel(view_scaled((float)device.viewport.X, 0), 0);
+		GLint y0 = target_pixel(view_scaled((float)device.viewport.Y, 1), 1);
 
 		glEnable(GL_SCISSOR_TEST);
-		glScissor(x0, y0, target_pixel((float)(device.viewport.X + device.viewport.Width), 0) - x0,
-			target_pixel((float)(device.viewport.Y + device.viewport.Height), 1) - y0);
+		glScissor(x0, y0, target_pixel(view_scaled((float)(device.viewport.X + device.viewport.Width), 0), 0) - x0,
+			target_pixel(view_scaled((float)(device.viewport.Y + device.viewport.Height), 1), 1) - y0);
 		glClear(mask);
 		glDisable(GL_SCISSOR_TEST);
 		clear_state_forget();
@@ -7172,10 +7284,10 @@ void WINAPI D3DDevice_Clear(DWORD count, CONST D3DRECT *rectangles, DWORD flags,
 
 		if (left >= right || top >= bottom)
 			continue;
-		x0 = target_pixel((float)(left + UI_OFFSET), 0);
-		y0 = target_pixel((float)top, 1);
-		glScissor(x0, y0, target_pixel((float)(right + UI_OFFSET), 0) - x0,
-			target_pixel((float)bottom, 1) - y0);
+		x0 = target_pixel(view_scaled((float)(left + UI_OFFSET), 0), 0);
+		y0 = target_pixel(view_scaled((float)top, 1), 1);
+		glScissor(x0, y0, target_pixel(view_scaled((float)(right + UI_OFFSET), 0), 0) - x0,
+			target_pixel(view_scaled((float)bottom, 1), 1) - y0);
 		glClear(mask);
 	}
 	glDisable(GL_SCISSOR_TEST);
@@ -7773,6 +7885,7 @@ void WINAPI D3DDevice_Present(CONST RECT *source_rectangle, CONST RECT *destinat
 	(void)unused2;
 	if (screenshot_every < 0)
 		screenshot_every = config_integer("debug.screenshot_every");
+	frame_times_note();
 
 	if (device.gl_ready)
 	{

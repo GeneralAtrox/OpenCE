@@ -1278,7 +1278,7 @@ void scenario_get_sound_environment(
 	selected_background_sound_index = NONE;
 	best_priority = -32768;
 
-	for (local_player_index = 0; (short)local_player_index < 4; local_player_index++)
+	for (local_player_index = 0; (short)local_player_index < MAXIMUM_LOCAL_PLAYERS; local_player_index++)
 	{
 		fog_index = NONE;
 		player_index = local_player_get_player_index((short)local_player_index);

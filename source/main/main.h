@@ -130,6 +130,12 @@ void compute_window_bounds(
 	rectangle2d *pixel_bounds,
 	rectangle2d *safe_frame_bounds);
 
+/* port: the cells of a split screen of more than four views, and how much
+smaller than a quarter's a view's HUD and menus draw (main.c) */
+void split_screen_cell(long player_index, long num_players, rectangle2d *cell, long *row, long *rows,
+	long *column, long *columns);
+real split_screen_ui_scale(rectangle2d const *view);
+
 short main_get_window_count(
 	void);
 

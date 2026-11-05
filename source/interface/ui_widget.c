@@ -7387,6 +7387,23 @@ void render_ui_widgets_postgame(
 			bounds.y0 = 0;
 			bounds.x1 = window_bounds->x1 - window_bounds->x0;
 			bounds.y1 = window_bounds->y1 - window_bounds->y0;
+			if (local_player_count() > 4)
+			{
+				/* port: more than four views: the view's corner */
+				rectangle2d cell;
+				point2d corner;
+
+				split_screen_cell(local_player_index, local_player_count(), &cell, NULL, NULL, NULL, NULL);
+				corner.x = cell.x0;
+				corner.y = cell.y0;
+				widget_instance_render_recursive(
+					widget_globals.active_widgets[widget_index],
+					&bounds,
+					corner,
+					TRUE,
+					FALSE);
+			}
+			else
 			widget_instance_render_recursive(
 				widget_globals.active_widgets[widget_index],
 				&bounds,

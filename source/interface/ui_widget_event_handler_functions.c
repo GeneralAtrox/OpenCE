@@ -1853,7 +1853,7 @@ static boolean create_and_begin_editing_new_gametype_profile(
 
 	result = FALSE;
 	match_vassert("c:\\halo\\SOURCE\\interface\\ui_widget_event_handler_functions.c", 4272,
-		event->controller_index >= 0 && event->controller_index < 4,
+		event->controller_index >= 0 && event->controller_index < MAXIMUM_LOCAL_PLAYERS,
 		"creating a new profile requires a valid local player index");
 	saved_game_file_get_useable_untitled_profile_name(name);
 	if (name[0])
@@ -2430,7 +2430,7 @@ static boolean network_game_remove_local_player(
 	boolean *widget_deleted)
 {
 	match_vassert("c:\\halo\\SOURCE\\interface\\ui_widget_event_handler_functions.c", 4073,
-		event && event->controller_index >= 0 && event->controller_index < 4,
+		event && event->controller_index >= 0 && event->controller_index < MAXIMUM_LOCAL_PLAYERS,
 		"valid controller index required to remove player from network game");
 	/* port: a multiplayer map played alone (its pause screen: ui_widget.c's
 	ui_check_for_pause_game) has no network game to leave: the main menu,
@@ -6181,7 +6181,7 @@ boolean ui_widget_port_multiplayer_player(
 {
 	struct player_profile profile;
 
-	if (controller_index < 0 || controller_index >= 4 || !player_profile_get(profile_index, &profile))
+	if (controller_index < 0 || controller_index >= MAXIMUM_LOCAL_PLAYERS || !player_profile_get(profile_index, &profile))
 		return FALSE;
 	if (!player_name_valid(profile.player_name, NUMBEROF(profile.player_name)))
 	{

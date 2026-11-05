@@ -431,12 +431,51 @@ static void render_window(
 				rasterizer_camera->viewport_bounds.x1,
 				rasterizer_camera->viewport_bounds.y1);
 		}
-		interface_draw_screen();
-		rasterizer_screen_flash();
-		/* port: the view's menus centred in it (a quarter's are 320 wide) */
-		halo_screen_ui_offset_view(rasterizer_camera->viewport_bounds.x1 - rasterizer_camera->viewport_bounds.x0);
-		render_ui_widgets(local_player_index, &rasterizer_camera->viewport_bounds);
-		halo_screen_ui_offset(FALSE);
+		{
+			/* port: more than four views (16 local players): the HUD and
+			menus are laid out for a view as large as a quarter of the
+			screen (whose HUD the tags scale for split screen) and drawn
+			that much smaller into the view (halo_screen_view_scale_begin) */
+			real ui_scale = split_screen_ui_scale(&rasterizer_camera->viewport_bounds);
+			rectangle2d saved_bounds[4];
+			short corner_x = rasterizer_camera->viewport_bounds.x0;
+			short corner_y = rasterizer_camera->viewport_bounds.y0;
+			rectangle2d *scaled_bounds[4];
+			short index;
+
+			scaled_bounds[0] = &rasterizer_camera->viewport_bounds;
+			scaled_bounds[1] = &rasterizer_camera->window_bounds;
+			scaled_bounds[2] = &render.camera.viewport_bounds;
+			scaled_bounds[3] = &render.camera.window_bounds;
+			if (ui_scale < 1.0f)
+			{
+				for (index = 0; index < 4; index++)
+				{
+					saved_bounds[index] = *scaled_bounds[index];
+					scaled_bounds[index]->x0 = (short)(corner_x + (scaled_bounds[index]->x0 - corner_x) / ui_scale);
+					scaled_bounds[index]->x1 = (short)(corner_x + (scaled_bounds[index]->x1 - corner_x) / ui_scale);
+					scaled_bounds[index]->y0 = (short)(corner_y + (scaled_bounds[index]->y0 - corner_y) / ui_scale);
+					scaled_bounds[index]->y1 = (short)(corner_y + (scaled_bounds[index]->y1 - corner_y) / ui_scale);
+				}
+				halo_screen_view_scale_begin(ui_scale);
+			}
+			interface_draw_screen();
+			if (ui_scale < 1.0f)
+				halo_screen_view_scale_end();
+			rasterizer_screen_flash();
+			if (ui_scale < 1.0f)
+				halo_screen_view_scale_begin(ui_scale);
+			/* port: the view's menus centred in it (a quarter's are 320 wide) */
+			halo_screen_ui_offset_view(rasterizer_camera->viewport_bounds.x1 - rasterizer_camera->viewport_bounds.x0);
+			render_ui_widgets(local_player_index, &rasterizer_camera->viewport_bounds);
+			halo_screen_ui_offset(FALSE);
+			if (ui_scale < 1.0f)
+			{
+				halo_screen_view_scale_end();
+				for (index = 0; index < 4; index++)
+					*scaled_bounds[index] = saved_bounds[index];
+			}
+		}
 	}
 
 	bink_playback_render();

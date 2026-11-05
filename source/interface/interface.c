@@ -1247,6 +1247,38 @@ static void interface_splitscreen_render(
 	if (window_count <= 1)
 		return;
 
+	/* port: more than four views: a line under each view not on the bottom
+	row and right of each not at the right edge */
+	if (window_count > 4)
+	{
+		short index;
+
+		for (index = 0; index < window_count; index++)
+		{
+			rectangle2d cell;
+			long row, rows, column, columns;
+
+			split_screen_cell(index, window_count, &cell, &row, &rows, &column, &columns);
+			if (row + 1 < rows)
+			{
+				bounds.x0 = cell.x0;
+				bounds.x1 = cell.x1;
+				bounds.y0 = cell.y1 - 1;
+				bounds.y1 = cell.y1 + 1;
+				draw_quad(&bounds, 0xFF000000);
+			}
+			if (column + 1 < columns)
+			{
+				bounds.x0 = cell.x1 - 1;
+				bounds.x1 = cell.x1 + 1;
+				bounds.y0 = cell.y0;
+				bounds.y1 = cell.y1;
+				draw_quad(&bounds, 0xFF000000);
+			}
+		}
+		return;
+	}
+
 	bounds.y0 = 239;
 	bounds.x0 = 0;
 	bounds.y1 = 241;

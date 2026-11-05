@@ -803,10 +803,8 @@ static void create_local_players(
 	{
 		csmemset(used_controllers, NONE, sizeof(used_controllers));
 		csmemset(desired_controllers, NONE, sizeof(desired_controllers));
-		default_controllers[0] = 0;
-		default_controllers[1] = 1;
-		default_controllers[2] = 2;
-		default_controllers[3] = 3;
+		for (i = 0; i < MAXIMUM_GAMEPADS; i++)
+			default_controllers[i] = (short)i;
 
 		match_assert(
 			"c:\\halo\\SOURCE\\main\\main.c",
@@ -1366,6 +1364,97 @@ static void compute_subframe_counts(
 	return;
 }
 
+/* port: more than four views (16 local players). The views fill the frame
+in rows; the row count is the one whose views come nearest a 3:2 shape for
+the frame's own shape (4 by 4 on 16:10 and 4:3, 3 rows of 5 or 6 on 21:9),
+so no shape of window is stretched or left with bars. Rows with fewer views
+come first, as the Xbox's three players put player 1 across the top. */
+static long split_screen_rows(
+	long num_players)
+{
+	real frame_width = (real)(rasterizer_globals.reserved04.frame_bounds.x1 - rasterizer_globals.reserved04.frame_bounds.x0);
+	real frame_height = (real)(rasterizer_globals.reserved04.frame_bounds.y1 - rasterizer_globals.reserved04.frame_bounds.y0);
+	long rows, best_rows = 1;
+	real best = 0.0f;
+
+	if (frame_height <= 0.0f || frame_width <= 0.0f)
+		return 1;
+	for (rows = 1; rows <= num_players; rows++)
+	{
+		long columns = (num_players + rows - 1) / rows;
+		real shape = (frame_width / (real)columns) / (frame_height / (real)rows);
+		real error = shape > 1.5f ? shape / 1.5f : 1.5f / shape;
+
+		if (rows == 1 || error < best)
+		{
+			best = error;
+			best_rows = rows;
+		}
+	}
+	return best_rows;
+}
+
+/* port: the view's cell (in the frame's units) of a split screen of more than four */
+void split_screen_cell(
+	long player_index,
+	long num_players,
+	rectangle2d *cell,
+	long *row_out,
+	long *rows_out,
+	long *column_out,
+	long *columns_out)
+{
+	long rows = split_screen_rows(num_players);
+	long base = num_players / rows;
+	long longer = num_players % rows;
+	long row = 0, first = 0, columns = 0, column;
+	long x0 = rasterizer_globals.reserved04.frame_bounds.x0;
+	long y0 = rasterizer_globals.reserved04.frame_bounds.y0;
+	long width = rasterizer_globals.reserved04.frame_bounds.x1 - x0;
+	long height = rasterizer_globals.reserved04.frame_bounds.y1 - y0;
+
+	for (row = 0; row < rows; row++)
+	{
+		columns = base + (row >= rows - longer ? 1 : 0);
+		if (player_index < first + columns)
+			break;
+		first += columns;
+	}
+	if (row >= rows)
+		row = rows - 1;
+	column = player_index - first;
+	cell->x0 = (short)(x0 + width * column / columns);
+	cell->x1 = (short)(x0 + width * (column + 1) / columns);
+	cell->y0 = (short)(y0 + height * row / rows);
+	cell->y1 = (short)(y0 + height * (row + 1) / rows);
+	if (row_out)
+		*row_out = row;
+	if (rows_out)
+		*rows_out = rows;
+	if (column_out)
+		*column_out = column;
+	if (columns_out)
+		*columns_out = columns;
+}
+
+/* port: how much smaller than a 4-player quarter (320 by 240 of the 480
+lines) the view's HUD and menus draw, laid out as a quarter's: 1 for four
+views or fewer */
+real split_screen_ui_scale(
+	rectangle2d const *view)
+{
+	real width = (real)(view->x1 - view->x0);
+	real height = (real)(view->y1 - view->y0);
+	real scale;
+
+	if (main_get_window_count() <= 4 || width <= 0.0f || height <= 0.0f)
+		return 1.0f;
+	scale = height / 240.0f;
+	if (width / 320.0f < scale)
+		scale = width / 320.0f;
+	return scale < 1.0f ? scale : 1.0f;
+}
+
 void compute_window_bounds(
 	long player_index,
 	long num_players,
@@ -1387,6 +1476,27 @@ void compute_window_bounds(
 		player_index<num_players);
 	safe_frame_inset = num_players>1 ? 4 : 0;
 	first_player_spans_two_columns = FALSE;
+	/* port: more than four views */
+	if (num_players > 4)
+	{
+		long row, rows, column, columns;
+
+		split_screen_cell(player_index, num_players, safe_frame_bounds, &row, &rows, &column, &columns);
+		*pixel_bounds = *safe_frame_bounds;
+		safe_frame_bounds->x0 += column ? safe_frame_inset : 0;
+		safe_frame_bounds->x1 -= column + 1 < columns ? safe_frame_inset : 0;
+		safe_frame_bounds->y0 += row ? safe_frame_inset : 0;
+		safe_frame_bounds->y1 -= row + 1 < rows ? safe_frame_inset : 0;
+		if (!column)
+			pixel_bounds->x0 = rasterizer_globals.reserved04.screen_bounds.x0;
+		if (column + 1 == columns)
+			pixel_bounds->x1 = rasterizer_globals.reserved04.screen_bounds.x1;
+		if (!row)
+			pixel_bounds->y0 = rasterizer_globals.reserved04.screen_bounds.y0;
+		if (row + 1 == rows)
+			pixel_bounds->y1 = rasterizer_globals.reserved04.screen_bounds.y1;
+		return;
+	}
 	compute_subframe_counts(
 		num_players,
 		&horizontal_count,

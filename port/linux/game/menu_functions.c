@@ -489,13 +489,13 @@ static boolean setting_save(struct widget_instance *widget)
 
 static short controller_of(struct widget_instance const *widget)
 {
-	return widget->local_player_index >= 0 && widget->local_player_index < 4 ? widget->local_player_index : 0;
+	return widget->local_player_index >= 0 && widget->local_player_index < MAXIMUM_LOCAL_PLAYERS ? widget->local_player_index : 0;
 }
 
 /* the controller the event came from, else the widget's */
 static short event_controller(struct widget_instance const *widget, struct event_record const *event)
 {
-	return event && event->controller_index >= 0 && event->controller_index < 4 ?
+	return event && event->controller_index >= 0 && event->controller_index < MAXIMUM_LOCAL_PLAYERS ?
 		event->controller_index : controller_of(widget);
 }
 
@@ -602,7 +602,7 @@ static boolean profile_edit_begin(struct widget_instance *widget, struct event_r
 	if (pc_menu_profile_edit_begin())
 		return TRUE;
 	/* (a press: the profile is made on its controller) */
-	if (main_menu_is_active() && event && event->controller_index >= 0 && event->controller_index < 4)
+	if (main_menu_is_active() && event && event->controller_index >= 0 && event->controller_index < MAXIMUM_LOCAL_PLAYERS)
 		game_function("new campaign chosen", widget, event, widget_deleted);
 	return FALSE;
 }
@@ -5858,6 +5858,37 @@ static boolean lobby_add_player(short controller)
 	return TRUE;
 }
 
+/* port: controller 5 to 16's START in the lobby: it joins on the first
+profile no other player of this machine has (FALSE: no screen opens) */
+static boolean lobby_join_direct(short controller)
+{
+	short index, other;
+
+	profile_list_read(TRUE);
+	for (index = 0; index < profile_list.count; index++)
+	{
+		boolean taken = FALSE;
+
+		for (other = 0; other < MAXIMUM_LOCAL_PLAYERS; other++)
+		{
+			taken |= other != controller && lobby_controller_playing(other) &&
+				player_ui_get_active_player_profile_index(other) == profile_list.indices[index];
+		}
+		if (!taken)
+		{
+			struct player_profile profile;
+
+			if (player_profile_get(profile_list.indices[index], &profile))
+				player_ui_set_active_player_profile(controller, profile_list.indices[index], &profile);
+			if (!ui_widget_port_multiplayer_player(controller, profile_list.indices[index]))
+				platform_log("menus: player %d could not join", controller + 1);
+			return FALSE;
+		}
+	}
+	display_error_text_deferred(L"Every profile is in use.\r\nMake another in PROFILES\r\nfor this player.", NONE);
+	return campaign_fail();
+}
+
 /* "port lobby join" (START): a controller not playing joins, choosing its
 profile next (FALSE: no profile screen); a player's START is the focused
 button's */
@@ -5879,6 +5910,10 @@ static boolean lobby_join_start(struct widget_instance *widget, short controller
 		display_error_text_deferred(L"The game is full.", NONE);
 		return campaign_fail();
 	}
+	/* port: controllers 5 to 16 have no quarter on the 4-way screen: they
+	join at once, on the first profile no player of this machine has */
+	if (controller >= 4)
+		return lobby_join_direct(controller);
 	/* (the 4-way screen opens as player 1's, with this controller joining:
 lobby_add_player) */
 	lobby_join.controller = controller;
@@ -6704,7 +6739,7 @@ static void join4_keyboard(void)
 		return;
 	if (halo_gamepad_count() >= MAXIMUM_LOCAL_PLAYERS)
 	{
-		join4_notice(L"All four controllers are in use.");
+		join4_notice(L"All 16 controllers are in use.");
 		return;
 	}
 	halo_keyboard_alone_set(TRUE);

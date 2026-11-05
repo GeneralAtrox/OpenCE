@@ -176,7 +176,7 @@ struct motion_sensor_player
 
 struct motion_sensor_globals_definition
 {
-	struct motion_sensor_player players[4];
+	struct motion_sensor_player players[MAXIMUM_LOCAL_PLAYERS];
 	long last_update_time;
 	short active_sensor_index;
 	boolean update;
@@ -190,7 +190,7 @@ typedef char motion_sensor_datum_size_assert[
 typedef char motion_sensor_player_size_assert[
 	sizeof(struct motion_sensor_player) == 0x568 ? 1 : -1];
 typedef char motion_sensor_globals_size_assert[
-	sizeof(struct motion_sensor_globals_definition) == 0x15A8 ? 1 : -1];
+	(MAXIMUM_LOCAL_PLAYERS != 4 || (sizeof(struct motion_sensor_globals_definition) == 0x15A8)) ? 1 : -1];
 
 /* ---------- prototypes */
 
@@ -954,7 +954,7 @@ static struct motion_sensor_player *get_motion_sensor_data(
 void motion_sensor_initialize(
 	void)
 {
-	motion_sensor_globals = (struct motion_sensor_globals_definition *)game_state_malloc("motion sensor (radar)", "sensor data", 5544);
+	motion_sensor_globals = (struct motion_sensor_globals_definition *)game_state_malloc("motion sensor (radar)", "sensor data", sizeof(struct motion_sensor_globals_definition));
 	match_assert("c:\\halo\\SOURCE\\interface\\motion_sensor.c", 298, motion_sensor_globals);
 
 	return;

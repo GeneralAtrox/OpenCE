@@ -156,7 +156,8 @@ enum
 {
 	hud_message_text_group_tag = 'hmt ',
 	hud_number_group_tag = 'hud#',
-	NUMBER_OF_HUD_MESSAGING_DATUMS = 4,
+	/* (a datum for each local player: port, 16) */
+	NUMBER_OF_HUD_MESSAGING_DATUMS = 16,
 	NUMBER_OF_HUD_MESSAGES_PER_DATUM = 4,
 	MAXIMUM_HUD_STATE_MESSAGE_TEXT_LENGTH = 256
 };

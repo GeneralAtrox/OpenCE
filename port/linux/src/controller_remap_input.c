@@ -24,7 +24,7 @@ static struct
     int custom, context, connected;
     unsigned int instance, blocked, held, pressed;
     unsigned char layout[CONTROLLER_REMAP_ACTIONS], targets[CONTROLLER_REMAP_ACTIONS];
-} remap_ports[4];
+} remap_ports[16];
 
 void controller_remap_input_reset(void)
 {
@@ -224,7 +224,7 @@ unsigned int controller_remap_pressed(short port, unsigned int mask)
 int controller_remap_talk(void)
 {
     short port;
-    for (port = 0; port < 4; port++)
+    for (port = 0; port < 16; port++)
         if (controller_remap_held(port) & (1u << PAD_TALK)) return 1;
     return 0;
 }

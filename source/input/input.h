@@ -14,7 +14,8 @@ INPUT.H
 
 enum
 {
-	MAXIMUM_GAMEPADS = 4,
+	/* port: 16 controllers (memory units stay the Xbox's 4 ports' 8) */
+	MAXIMUM_GAMEPADS = 16,
 	MEMORY_UNIT_SLOTS_PER_GAMEPAD = 2,
 	MAXIMUM_GAMEPAD_MEMORY_UNITS = 8,
 

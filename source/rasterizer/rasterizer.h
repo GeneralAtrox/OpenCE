@@ -17,7 +17,8 @@ header included in hcex build.
 
 enum
 {
-	MAXIMUM_WINDOWS = 4,
+	/* port: a view for each of 16 local players */
+	MAXIMUM_WINDOWS = 16,
 	MAXIMUM_LENS_FLARES_PER_FRAME = 1024,
 	MAXIMUM_LIGHTS_PER_WINDOW = 128,
 };

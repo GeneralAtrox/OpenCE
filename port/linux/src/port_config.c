@@ -199,6 +199,30 @@ static const struct config_setting config_settings[] =
 		"P3 custom controller buttons, same format as controller_p1. Empty uses the profile." },
 	{ "input.controller_p4", _config_string, "\"\"", "HALO_CONTROLLER_P4", _environment_value, _platform_all,
 		"P4 custom controller buttons, same format as controller_p1. Empty uses the profile." },
+	{ "input.controller_p5", _config_string, "\"\"", "HALO_CONTROLLER_P5", _environment_value, _platform_all,
+		"P5 custom controller buttons, same format as controller_p1. Empty uses the profile." },
+	{ "input.controller_p6", _config_string, "\"\"", "HALO_CONTROLLER_P6", _environment_value, _platform_all,
+		"P6 custom controller buttons, same format as controller_p1. Empty uses the profile." },
+	{ "input.controller_p7", _config_string, "\"\"", "HALO_CONTROLLER_P7", _environment_value, _platform_all,
+		"P7 custom controller buttons, same format as controller_p1. Empty uses the profile." },
+	{ "input.controller_p8", _config_string, "\"\"", "HALO_CONTROLLER_P8", _environment_value, _platform_all,
+		"P8 custom controller buttons, same format as controller_p1. Empty uses the profile." },
+	{ "input.controller_p9", _config_string, "\"\"", "HALO_CONTROLLER_P9", _environment_value, _platform_all,
+		"P9 custom controller buttons, same format as controller_p1. Empty uses the profile." },
+	{ "input.controller_p10", _config_string, "\"\"", "HALO_CONTROLLER_P10", _environment_value, _platform_all,
+		"P10 custom controller buttons, same format as controller_p1. Empty uses the profile." },
+	{ "input.controller_p11", _config_string, "\"\"", "HALO_CONTROLLER_P11", _environment_value, _platform_all,
+		"P11 custom controller buttons, same format as controller_p1. Empty uses the profile." },
+	{ "input.controller_p12", _config_string, "\"\"", "HALO_CONTROLLER_P12", _environment_value, _platform_all,
+		"P12 custom controller buttons, same format as controller_p1. Empty uses the profile." },
+	{ "input.controller_p13", _config_string, "\"\"", "HALO_CONTROLLER_P13", _environment_value, _platform_all,
+		"P13 custom controller buttons, same format as controller_p1. Empty uses the profile." },
+	{ "input.controller_p14", _config_string, "\"\"", "HALO_CONTROLLER_P14", _environment_value, _platform_all,
+		"P14 custom controller buttons, same format as controller_p1. Empty uses the profile." },
+	{ "input.controller_p15", _config_string, "\"\"", "HALO_CONTROLLER_P15", _environment_value, _platform_all,
+		"P15 custom controller buttons, same format as controller_p1. Empty uses the profile." },
+	{ "input.controller_p16", _config_string, "\"\"", "HALO_CONTROLLER_P16", _environment_value, _platform_all,
+		"P16 custom controller buttons, same format as controller_p1. Empty uses the profile." },
 	{ "display.hud_button_style_xbox", _config_string, "\"classic\"", "HALO_HUD_BUTTON_STYLE_XBOX", _environment_value, _platform_all,
 		"Remembered automatic Xbox style: classic, gems, menu_gems, xbox_modern." },
 	{ "display.hud_button_style_ps", _config_string, "\"ps_classic\"", "HALO_HUD_BUTTON_STYLE_PS", _environment_value, _platform_all,
@@ -1177,13 +1201,13 @@ static const struct config_setting config_settings[] =
 		"b, x, y, up, down, left, right, start, back or wait, separated by\n"
 		"spaces or commas), for testing the menus; empty for none." },
 	{ "debug.virtual_gamepads", _config_integer, "0", "HALO_VIRTUAL_GAMEPADS", _environment_value, _platform_desktop,
-		"Attach this many SDL virtual gamepads (0 to 4), which the game takes for\n"
+		"Attach this many SDL virtual gamepads (0 to 16), which the game takes for\n"
 		"gamepads plugged in, for testing split screen; debug.virtual_gamepad_script\n"
 		"drives them." },
 	{ "debug.virtual_gamepad_script", _config_string, "\"\"", "HALO_VIRTUAL_GAMEPAD_SCRIPT", _environment_value,
 		_platform_desktop,
 		"What debug.virtual_gamepads press: \"<seconds> <pad> <what>; ...\", the\n"
-		"seconds from when the network lobby first opens, the pad 1 to 4 (0: the\n"
+		"seconds from when the network lobby first opens, the pad 1 to 16 (0: the\n"
 		"keyboard, a SPACE and start Enter), and a button (a, b, x, y, start, back,\n"
 		"up, down, left, right, lb, rb, lt, rt: pressed for 150 ms),\n"
 		"\"walk\" (the sticks move from then on) or \"still\"." },

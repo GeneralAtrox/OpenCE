@@ -6,17 +6,18 @@
 #include <string.h>
 
 /* Updated by the game's input polling, read by menus/HUD on the same thread. */
-static struct controller_device controller_devices[4];
+#define CONTROLLER_DEVICE_PORTS 16
+static struct controller_device controller_devices[CONTROLLER_DEVICE_PORTS];
 
 void controller_device_update(short port, void *gamepad)
 {
-    if (port >= 0 && port < 4) controller_device_read(gamepad, &controller_devices[port]);
+    if (port >= 0 && port < CONTROLLER_DEVICE_PORTS) controller_device_read(gamepad, &controller_devices[port]);
 }
 
 void controller_device_get(short port, struct controller_device *device)
 {
     memset(device, 0, sizeof(*device));
-    if (port >= 0 && port < 4) *device = controller_devices[port];
+    if (port >= 0 && port < CONTROLLER_DEVICE_PORTS) *device = controller_devices[port];
 }
 
 static int controller_family_from_type(SDL_GamepadType type)

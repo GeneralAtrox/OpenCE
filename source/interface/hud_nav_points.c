@@ -421,7 +421,7 @@ static void hud_deactivate_team_nav_point(
 void hud_initialize_nav_points(
 	void)
 {
-	nav_point_data = game_state_malloc("hud nav points", NULL, 0xC0);
+	nav_point_data = game_state_malloc("hud nav points", NULL, MAXIMUM_LOCAL_PLAYERS * sizeof(*nav_point_data));
 	match_assert("c:\\halo\\SOURCE\\interface\\hud_nav_points.c", 106, nav_point_data);
 
 	return;
@@ -430,7 +430,7 @@ void hud_initialize_nav_points(
 void hud_initialize_nav_points_for_new_map(
 	void)
 {
-	csmemset(nav_point_data, NONE, 0xC0);
+	csmemset(nav_point_data, NONE, MAXIMUM_LOCAL_PLAYERS * sizeof(*nav_point_data));
 
 	return;
 }

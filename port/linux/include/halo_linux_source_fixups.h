@@ -86,6 +86,11 @@ void halo_screen_ui_offset(unsigned char centered);
 screen's 640 columns are centred as the screen's, a quarter's 320 in the
 quarter; the shift in effect */
 void halo_screen_ui_offset_view(long view_width);
+/* port: more than four views: while a view's HUD and menus draw, the
+viewport the game sets (a quarter's size, from the view's corner) is drawn
+scale times as large, into the view (d3d8_gl.c) */
+void halo_screen_view_scale_begin(float scale);
+void halo_screen_view_scale_end(void);
 long halo_screen_ui_offset_current(void);
 /* (port/linux/game/menu_functions.c, for source/interface/ui_widget.c) the
 network lobby, which reads every controller's events however many players

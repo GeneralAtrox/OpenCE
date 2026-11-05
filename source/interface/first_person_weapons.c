@@ -1164,8 +1164,14 @@ static void first_person_weapon_build_node_matrices(
 	(first_person_weapon_update) takes the facing change since the last
 	frame as a tick's worth: move the last facing on once a tick. */
 	{
-		static long last_render_ticks[MAXIMUM_LOCAL_PLAYERS] = { NONE, NONE, NONE, NONE };
+		static long last_render_ticks[MAXIMUM_LOCAL_PLAYERS];
+		static boolean last_render_ticks_set = FALSE;
 
+		if (!last_render_ticks_set)
+		{
+			csmemset(last_render_ticks, NONE, sizeof(last_render_ticks));
+			last_render_ticks_set = TRUE;
+		}
 		if (!halo_interpolation_enabled() || last_render_ticks[local_player_index] != game_time_get())
 		{
 			first_person_weapon->last_render_facing= first_person_weapon->render_facing;

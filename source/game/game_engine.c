@@ -3652,7 +3652,7 @@ static boolean test_any_gamepad_button(
 	boolean result = FALSE;
 	long gamepad_index;
 
-	for (gamepad_index = 0; gamepad_index < 4; gamepad_index++)
+	for (gamepad_index = 0; gamepad_index < MAXIMUM_GAMEPADS; gamepad_index++)
 	{
 		struct gamepad_state const *gamepad_state =
 			input_get_gamepad_state((short)gamepad_index);
