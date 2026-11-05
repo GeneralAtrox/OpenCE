@@ -7488,6 +7488,31 @@ void render_ui_widgets_postgame(
 screen), noting and settling the first player's tap targets in the frame's
 first render that can, and draws the debug view of the targets and the
 virtual keyboard when they are up */
+/* port: how far down a widget and its visible children draw (bounds plus
+the offsets, as widget_instance_render_recursive places them) */
+static short ui_widget_port_extent(
+	struct widget_instance *widget,
+	short offset_y,
+	short depth)
+{
+	short bottom = 0;
+
+	for (; widget && depth < 16; widget = widget->next)
+	{
+		short y = (short)(offset_y + widget->vertical_offset);
+		short child_bottom;
+
+		if (!widget->visible || widget->definition_tag_index == NONE)
+			continue;
+		if (ui_widget_definition_get(widget->definition_tag_index)->bounds.y1 + y > bottom)
+			bottom = (short)(ui_widget_definition_get(widget->definition_tag_index)->bounds.y1 + y);
+		child_bottom = ui_widget_port_extent(widget->child, y, (short)(depth + 1));
+		if (child_bottom > bottom)
+			bottom = child_bottom;
+	}
+	return bottom;
+}
+
 /* port: (render.c) how much smaller the player's menus are drawn in its
 view: a full-screen menu (480 high) opened in a view less high, as network
 co-op's pause menu is for each player of a split screen (ui_check_for_pause_game),
@@ -7510,7 +7535,9 @@ real ui_widget_port_view_scale(
 		if (!widget || widget->local_player_index != local_player_index || widget->definition_tag_index == NONE)
 			continue;
 		definition = ui_widget_definition_get(widget->definition_tag_index);
-		height = (short)(definition->bounds.y1 - definition->bounds.y0);
+		height = (short)(definition->bounds.y1 + widget->vertical_offset);
+		if (ui_widget_port_extent(widget->child, widget->vertical_offset, 1) > height)
+			height = ui_widget_port_extent(widget->child, widget->vertical_offset, 1);
 		if (height > view_height && (real)view_height / height < scale)
 			scale = (real)view_height / height;
 	}
