@@ -10,8 +10,8 @@ static wchar_t const *const pad_action_labels[CONTROLLER_REMAP_ACTIONS] = {
 static short const pad_action_groups[CONTROLLER_REMAP_ACTIONS] = {0,1,1,1,1,2,1,1,0,2,2,2,0,0,0,0,3,3,3,3,4,4,4,4,4};
 static struct
 {
-    unsigned char buttons[4][CONTROLLER_REMAP_ACTIONS];
-    boolean custom[4];
+    unsigned char buttons[16][CONTROLLER_REMAP_ACTIONS];
+    boolean custom[16];
     short capturing, port, proposed, conflict, button, group;
 } pad_editor;
 
@@ -19,7 +19,7 @@ static short pad_editor_port(struct widget_instance *screen)
 {
     struct widget_instance *spinner = named(screen, "pad_player", 0);
     short port = spinner ? spinner->parameters.list.selected_index : 0;
-    return port >= 0 && port < 4 ? port : 0;
+    return port >= 0 && port < 16 ? port : 0;
 }
 
 static short pad_editor_action(struct widget_instance *widget)
@@ -59,7 +59,7 @@ static boolean pad_editor_event(struct widget_instance *widget, char const *name
         struct widget_instance *spinner = named(screen, "pad_player", 0);
         controller_remap_capture_end();
         pad_editor.capturing = pad_editor.proposed = NONE;
-        for (i = 0; i < 4; i++)
+        for (i = 0; i < 16; i++)
         {
             controller_remap_profile(i, pad_editor.buttons[i]);
             pad_editor.custom[i] = (boolean)controller_remap_read(i, pad_editor.buttons[i]);
@@ -96,7 +96,7 @@ static boolean pad_editor_event(struct widget_instance *widget, char const *name
     {
         boolean result = TRUE;
         if (pad_editor.capturing != NONE) return FALSE;
-        for (i = 0; i < 4; i++)
+        for (i = 0; i < 16; i++)
         {
             char text[CONTROLLER_REMAP_TEXT] = {0};
             if (pad_editor.custom[i]) controller_remap_format(pad_editor.buttons[i], text, sizeof(text));

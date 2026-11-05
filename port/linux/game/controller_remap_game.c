@@ -10,7 +10,7 @@
 #include "input/input.h"
 #include "main/console.h"
 short network_chat_controller(void);
-static unsigned char camera_context[4];
+static unsigned char camera_context[16];
 
 /* input_initialize reads the pads before game_time_initialize has made the
  * game time globals, which game_in_progress reads without checking. */
@@ -49,7 +49,7 @@ void controller_remap_profile(short port, unsigned char *buttons)
 short controller_remap_local_player(short port)
 {
     short local;
-    if (port < 0 || port >= 4 || !remap_game_in_progress()) return NONE;
+    if (port < 0 || port >= 16 || !remap_game_in_progress()) return NONE;
     for (local = local_player_get_next(NONE); local != NONE; local = local_player_get_next(local))
     {
         long player = local_player_get_player_index(local);
@@ -69,7 +69,7 @@ int controller_remap_context(short port)
 {
     if (!controller_remap_playing(port))
     {
-        if (!remap_game_in_progress() && port >= 0 && port < 4) camera_context[port] = 0;
+        if (!remap_game_in_progress() && port >= 0 && port < 16) camera_context[port] = 0;
         return 0;
     }
     return 1 + camera_context[port];
@@ -86,7 +86,7 @@ int controller_remap_camera(short local, int available, int controlling,
     *held = *pressed = 0;
     if (player == NONE) return 0;
     port = player_get(player)->local_player_index;
-    if (port < 0 || port >= 4) return 0;
+    if (port < 0 || port >= 16) return 0;
     camera_context[port] = available ? (controlling ? 2 : 1) : 0;
     {
         unsigned char layout[CONTROLLER_REMAP_ACTIONS];
@@ -119,7 +119,7 @@ void controller_remap_prompt(short port, struct game_input_preferences *preferen
     unsigned char buttons[CONTROLLER_REMAP_ACTIONS];
     long player;
     int i;
-    if (port < 0 || port >= 4) return;
+    if (port < 0 || port >= 16) return;
     player = local_player_get_player_index(port);
     if (player != NONE) port = player_get(player)->local_player_index;
     if (!controller_remap_read(port, buttons)) return;

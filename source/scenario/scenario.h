@@ -76,14 +76,14 @@ struct scenario_globals
 		real atmospheric_maximum_density;
 		real_rgb_color atmospheric_color;
 		real indoor_fog_scale;
-	} atmospheric_fog[4];
+	} atmospheric_fog[HALO_PORT_LOCAL_PLAYERS]; /* port: a view's each (the Xbox's 4) */
 	boolean sound_environment_initialized;
 	byte pad2[3];
 	struct sound_environment_definition sound_environment;
 };
 
 typedef char scenario_globals_size_assert[
-	sizeof(struct scenario_globals) == 0x100 ? 1 : -1];
+	(HALO_PORT_LOCAL_PLAYERS != 4 || sizeof(struct scenario_globals) == 0x100) ? 1 : -1];
 
 /* ---------- prototypes/SCENARIO.C */
 

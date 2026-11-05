@@ -2006,7 +2006,7 @@ void network_chat_update(
 
 	/* Drain every port even while typing, so another player's press is not
 	 * replayed after this line closes. Keyboard and touch keep their path. */
-	for (port = 0; port < 4; port++)
+	for (port = 0; port < 16; port++)
 	{
 		unsigned int actions = controller_remap_pressed(port, chat_mask);
 		if (actions && requested_port == NONE)

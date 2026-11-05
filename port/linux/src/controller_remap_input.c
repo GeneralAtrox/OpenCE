@@ -50,7 +50,7 @@ void controller_remap_capture_begin(short port)
 {
     struct controller_device device;
     controller_remap_capture_end();
-    if (port < 0 || port >= 4) return;
+    if (port < 0 || port >= 16) return;
     controller_device_get(port, &device);
     capture.port = port;
     capture.instance = device.instance;
@@ -100,7 +100,7 @@ int controller_remap_input(short port, XINPUT_GAMEPAD *pad, int connected)
     struct platform_input_state input;
     unsigned int actions = 0, allowed;
     int i, context, custom;
-    if (port < 0 || port >= 4) return 0;
+    if (port < 0 || port >= 16) return 0;
     /* Check from any polled port, including while the selected one is absent. */
     if (capture.phase && (!capture_device_present() ||
         (capture.phase < 4 && SDL_GetTicks() - capture.polled > 1000)))
@@ -198,7 +198,7 @@ int controller_remap_connected(short port)
 {
     struct controller_device device;
     struct platform_input_state input;
-    if (port < 0 || port >= 4) return 0;
+    if (port < 0 || port >= 16) return 0;
     controller_device_get(port, &device);
     platform_input_read(&input, FALSE);
     return remap_ports[port].connected && input.focused && device.name[0] &&
@@ -214,7 +214,7 @@ unsigned int controller_remap_held(short port)
 unsigned int controller_remap_pressed(short port, unsigned int mask)
 {
     unsigned int result;
-    if (port < 0 || port >= 4) return 0;
+    if (port < 0 || port >= 16) return 0;
     result = controller_remap_connected(port) && controller_remap_context(port) == remap_ports[port].context ?
         remap_ports[port].pressed & mask : 0;
     remap_ports[port].pressed &= ~mask;
