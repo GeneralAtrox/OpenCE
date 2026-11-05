@@ -1088,7 +1088,10 @@ static boolean pack_make(
 	pack_path(temporary_path, sizeof(temporary_path), ".new");
 	pack = fopen(temporary_path, "w+b");
 	if (!pack)
+	{
+		platform_log("player skins: cannot write %s", temporary_path);
 		return FALSE;
+	}
 
 	memset(header, 0, sizeof(*header));
 	memcpy(header->magic, "unmade..", 8);
@@ -1106,7 +1109,11 @@ static boolean pack_make(
 	tag_range.size = (unsigned long)header->tag_data_size;
 	tag_range.pack_offset = (unsigned long)header->tag_data_pack_offset;
 	if (!donor_copy_ranges(raw, raw_length, header->file_length, &tag_range, 1, pack))
+	{
+		platform_log("player skins: The Maw's tags could not be read (%ld of %ld bytes in the file)", raw_length,
+			header->file_length);
 		goto done;
+	}
 
 	/* then what the skins' tags read of the rest */
 	import = malloc(sizeof(*import));
@@ -1114,7 +1121,10 @@ static boolean pack_make(
 		goto done;
 	memset(import, 0, sizeof(*import));
 	if (!donor_load(&import->donor, pack, header))
+	{
+		platform_log("player skins: The Maw's tags are not a map's");
 		goto done;
+	}
 	import->remap = malloc((size_t)import->donor.count * sizeof(long));
 	import->ranges = malloc(MAXIMUM_SKIN_RANGES * sizeof(struct skin_range));
 	if (!import->remap || !import->ranges)
@@ -1143,7 +1153,10 @@ static boolean pack_make(
 		pack_offset += range->size;
 	}
 	if (!donor_copy_ranges(raw, raw_length, header->file_length, import->ranges, header->range_count, pack))
+	{
+		platform_log("player skins: The Maw's bitmaps and sounds could not be read (%ld ranges)", header->range_count);
 		goto done;
+	}
 	header->range_table_offset = (long)pack_offset;
 	memcpy(header->magic, SKIN_PACK_MAGIC, 8);
 	if (fseek(pack, header->range_table_offset, SEEK_SET) ||
@@ -1151,6 +1164,7 @@ static boolean pack_make(
 			(size_t)header->range_count ||
 		fseek(pack, 0, SEEK_SET) || fwrite(header, sizeof(*header), 1, pack) != 1 || fflush(pack))
 	{
+		platform_log("player skins: cannot write %s", temporary_path);
 		goto done;
 	}
 	platform_log("player skins: made %s (%ld tags, %ld file ranges, %lu bytes)", path, import->order_count,
@@ -1170,6 +1184,8 @@ done:
 	{
 		remove(path);
 		success = rename(temporary_path, path) == 0;
+		if (!success)
+			platform_log("player skins: cannot rename %s", temporary_path);
 	}
 	if (!success)
 		remove(temporary_path);
