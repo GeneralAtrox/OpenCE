@@ -537,7 +537,7 @@ static void import_part_buffers(
 {
 	struct skin_tag_header const *header = import->donor.header;
 	long vertex_size = part->vertex_buffer.type >= 0 &&
-		part->vertex_buffer.type < (short)NUMBER_OF_ELEMENTS(skin_vertex_type_sizes) ?
+		part->vertex_buffer.type < (short)(sizeof(skin_vertex_type_sizes) / sizeof(skin_vertex_type_sizes[0])) ?
 		skin_vertex_type_sizes[part->vertex_buffer.type] : 0;
 	long index_count = part->triangle_buffer.type == _triangle_buffer_type_triangles ? 3 * part->triangle_buffer.count :
 		part->triangle_buffer.count > 0 ? part->triangle_buffer.count + 2 : 0;
