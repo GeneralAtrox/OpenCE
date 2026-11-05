@@ -1483,16 +1483,13 @@ void compute_window_bounds(
 		long row, rows, column, columns;
 
 		split_screen_cell(player_index, num_players, pixel_bounds, &row, &rows, &column, &columns);
-		/* (the HUD keeps inside the screen's safe frame, and off the dividers) */
+		/* (the HUD keeps off the dividers; it is drawn as a quarter's, with
+		a quarter's margins, scaled into the view: render.c) */
 		*safe_frame_bounds = *pixel_bounds;
-		safe_frame_bounds->x0 = (short)MAX(safe_frame_bounds->x0 + (column ? safe_frame_inset : 0),
-			rasterizer_globals.reserved04.frame_bounds.x0);
-		safe_frame_bounds->x1 = (short)MIN(safe_frame_bounds->x1 - (column + 1 < columns ? safe_frame_inset : 0),
-			rasterizer_globals.reserved04.frame_bounds.x1);
-		safe_frame_bounds->y0 = (short)MAX(safe_frame_bounds->y0 + (row ? safe_frame_inset : 0),
-			rasterizer_globals.reserved04.frame_bounds.y0);
-		safe_frame_bounds->y1 = (short)MIN(safe_frame_bounds->y1 - (row + 1 < rows ? safe_frame_inset : 0),
-			rasterizer_globals.reserved04.frame_bounds.y1);
+		safe_frame_bounds->x0 += column ? safe_frame_inset : 0;
+		safe_frame_bounds->x1 -= column + 1 < columns ? safe_frame_inset : 0;
+		safe_frame_bounds->y0 += row ? safe_frame_inset : 0;
+		safe_frame_bounds->y1 -= row + 1 < rows ? safe_frame_inset : 0;
 		return;
 	}
 	compute_subframe_counts(

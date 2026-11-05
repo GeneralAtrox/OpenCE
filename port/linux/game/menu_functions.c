@@ -5897,8 +5897,28 @@ static boolean lobby_join_direct(short controller)
 	name[NUMBEROF(name) - 1] = 0;
 	for (pass = 0; pass < 3 && chosen == NONE; pass++)
 	{
-		if (pass == 1 && profile_list.count < MAXIMUM_PROFILES && player_profile_new(controller, name) != NONE)
-			platform_log("menus: made profile \"Player %d\" for controller %d", controller + 1, controller + 1);
+		/* (its name may be another player's profile, chosen on the 4-way
+		screen: then the next free "Player <n>" past the controllers') */
+		if (pass == 1)
+		{
+			short number;
+
+			for (number = controller + 1; number <= controller + 1 + MAXIMUM_PROFILES &&
+				profile_list.count < MAXIMUM_PROFILES; number = number == controller + 1 ? MAXIMUM_LOCAL_PLAYERS + 1 : number + 1)
+			{
+				wchar_t made[MAXIMUM_PLAYER_PROFILE_NAME_LENGTH];
+
+				usnprintf(made, NUMBEROF(made) - 1, L"Player %d", number);
+				made[NUMBEROF(made) - 1] = 0;
+				if (player_profile_new(controller, made) != NONE)
+				{
+					platform_log("menus: made profile \"Player %d\" for controller %d", number, controller + 1);
+					/* (the next pass looks for it by its name) */
+					csmemcpy(name, made, sizeof(name));
+					break;
+				}
+			}
+		}
 		profile_list_read(TRUE);
 		for (index = 0; index < profile_list.count && chosen == NONE; index++)
 		{
