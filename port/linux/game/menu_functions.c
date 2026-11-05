@@ -6876,8 +6876,30 @@ static boolean join4_choosing(struct widget_instance *quarter)
 	profile = ui_widget_port_spinner_first_available(quarter, join4_profile_free);
 	if (controller < JOIN4_QUARTERS)
 	{
+		short index, other;
+
 		platform_log("menus: player %d chooses a profile: %d of %d shown%s", controller + 1, join4.shown[controller],
 			join4.profile_count[controller], profile == NONE ? ", none free" : "");
+		/* JOINDEBUG */
+		for (other = 0; other < 4; other++)
+			platform_log("menus: JOINDEBUG player %d active %08lx state %d playing %d", other + 1,
+				(unsigned long)player_ui_get_active_player_profile_index(other), join4.state[other],
+				lobby_controller_playing(other));
+		for (index = 0; index < join4.profile_count[controller]; index++)
+		{
+			struct player_profile debug_profile;
+			char debug_name[64];
+			short c;
+
+			memset(&debug_profile, 0, sizeof(debug_profile));
+			player_profile_get(join4.profiles[controller][index], &debug_profile);
+			for (c = 0; c < 63 && debug_profile.player_name[c]; c++)
+				debug_name[c] = (char)debug_profile.player_name[c];
+			debug_name[c] = 0;
+			platform_log("menus: JOINDEBUG profile %08lx \"%s\" taken %d", (unsigned long)join4.profiles[controller][index],
+				debug_name, join4_profile_taken(controller, join4.profiles[controller][index]));
+		}
+		platform_log("menus: JOINDEBUG first %08lx", (unsigned long)profile);
 	}
 	if (profile == NONE)
 		profile = join4_profile_new(quarter, controller);
@@ -6923,9 +6945,14 @@ static boolean join4_select(struct widget_instance *widget, struct event_record 
 		return FALSE;
 	}
 	if (!game_function("1wide plyr prof set for game", widget, event, widget_deleted))
+	{
+		platform_log("menus: JOINDEBUG player %d's profile could not be set", controller + 1);
 		return FALSE;
+	}
 	if (join4_profile_taken(controller, player_ui_get_active_player_profile_index(controller)))
 	{
+		platform_log("menus: JOINDEBUG player %d's profile %08lx is taken", controller + 1,
+			(unsigned long)player_ui_get_active_player_profile_index(controller));
 		join4_notice(L"Another player has that profile.");
 		ui_play_audio_feedback_sound(SOUND_ERROR);
 		return FALSE;
