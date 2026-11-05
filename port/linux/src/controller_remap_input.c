@@ -92,6 +92,9 @@ int controller_remap_capture_poll(int *button)
     return result;
 }
 
+/* (xinput_sdl.c) whether debug.virtual_gamepads attached any */
+extern int halo_virtual_gamepads_attached(void);
+
 int controller_remap_input(short port, XINPUT_GAMEPAD *pad, int connected)
 {
     unsigned char values[16], layout[CONTROLLER_REMAP_ACTIONS], targets[CONTROLLER_REMAP_ACTIONS];
@@ -116,7 +119,8 @@ int controller_remap_input(short port, XINPUT_GAMEPAD *pad, int connected)
     for (i = 0; i < 16; i++) if (values[i] > 30) held |= 1u << i;
     platform_input_read(&input, FALSE);
     controller_device_get(port, &device);
-    if (!input.focused) connected = 0;
+    /* (a test's virtual gamepads play in a window without the focus) */
+    if (!input.focused && !halo_virtual_gamepads_attached()) connected = 0;
     if (capture.phase && capture.port == port)
     {
         controller_device_get(port, &device);

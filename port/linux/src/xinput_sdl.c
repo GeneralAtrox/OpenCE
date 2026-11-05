@@ -1323,6 +1323,13 @@ void halo_virtual_gamepads_start(void)
 	}
 }
 
+/* (controller_remap_input.c) whether a test's virtual gamepads are attached:
+they play while the window has no focus */
+int halo_virtual_gamepads_attached(void)
+{
+	return virtual_pad_count > 0;
+}
+
 static void virtual_gamepads_attach(void)
 {
 #ifdef HALO_ANDROID
