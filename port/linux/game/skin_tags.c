@@ -23,7 +23,7 @@ rasterizer (skin_tags_loaded) take as the map's.
 
 The bitmaps' pixels and the sounds' samples of the copied tags are in The
 Maw's file, which is compressed: what of it they need is inflated once into
-the skins' cache file (player_skins.cache in the saves' folder) with The
+the skins' cache file (player_skins.cache in the saves' folder z, the cache drive's) with The
 Maw's tag data, and read from there (skin_tags_read). The cache file is made
 again when The Maw's checksum or this file's version (SKIN_PACK_VERSION)
 changes.
@@ -57,7 +57,6 @@ and is not made: distributed_client_change_valid).
 
 /* the platform layer's (port/linux/src) */
 void platform_log(char const *format, ...);
-const char *platform_save_root(void);
 void platform_translate_path(const char *xbox_path, char *host_path, unsigned long host_path_size);
 
 #ifdef HALO_ANDROID
@@ -1062,7 +1061,8 @@ static void pack_path(
 	size_t size,
 	char const *suffix)
 {
-	snprintf(path, size, "%s/%s%s", platform_save_root(), SKIN_PACK_FILE, suffix);
+	/* (z:, the cache drive, is a folder of the saves': fopen takes Xbox paths) */
+	snprintf(path, size, "z:\\%s%s", SKIN_PACK_FILE, suffix);
 
 	return;
 }
@@ -1209,7 +1209,7 @@ static FILE *pack_open(
 
 	snprintf(donor_xbox_path, sizeof(donor_xbox_path), "%s%s.map", cache_files_map_directory(), SKIN_DONOR_MAP);
 	platform_translate_path(donor_xbox_path, donor_path, sizeof(donor_path));
-	raw = fopen(donor_path, "rb");
+	raw = fopen(donor_xbox_path, "rb");
 	if (!raw)
 	{
 		platform_log("player skins: no %s.map, so no Elite, Flood or Hunter (%s)", SKIN_DONOR_MAP, donor_path);
