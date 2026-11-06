@@ -3749,7 +3749,13 @@ static void biped_update_moving(
 		if (!TEST_FLAG(definition->biped.flags, _biped_flying_bit) ||
 			TEST_FLAG(biped->object.damage_flags, _object_dead_bit))
 		{
-			if (!TEST_FLAG(definition->biped.flags, _biped_uses_player_physics_bit) ||
+			/* port: a player's Hunter (port/linux/game/player_skins.c) moves
+			as a player does, by its throttle: its animations move it only
+			forward (it has none for moving back or to a side) */
+			extern boolean player_skins_unit_moves_as_player(long unit_index);
+
+			if ((!TEST_FLAG(definition->biped.flags, _biped_uses_player_physics_bit) &&
+				!player_skins_unit_moves_as_player(biped_index)) ||
 				biped->unit.animation.state == _unit_state_user_animation)
 			{
 				if (!TEST_FLAG(biped->biped.flags, _biped_slipping_bit) &&

@@ -458,6 +458,15 @@ boolean player_skins_unit_is_body(
 	return player_skin_body_of_unit(unit_index) != NONE;
 }
 
+/* a player's Hunter moves by its throttle, at a player's speeds (bipeds.c),
+not by its animations' steps, which go only forward: so it can strafe and
+back away */
+boolean player_skins_unit_moves_as_player(
+	long unit_index)
+{
+	return player_skin_body_of_unit(unit_index) == _skin_body_hunter;
+}
+
 boolean player_skins_weapon_fire(
 	long weapon_index,
 	long unit_index)
