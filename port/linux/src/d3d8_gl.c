@@ -2792,21 +2792,23 @@ static int frame_time_compare(const void *left, const void *right)
 
 static void frame_times_note(void)
 {
-	static double every = -1.0, last = 0.0, start = 0.0, frequency = 0.0;
+	static double every = -1.0, last = 0.0, start = 0.0;
 	static float times[16384], sorted[16384];
 	static long count = 0;
 	double now;
+	struct timespec clock_now;
 
 	if (every < 0.0)
 	{
 		const char *value = getenv("HALO_FRAME_LOG");
 
 		every = value ? atof(value) : 0.0;
-		frequency = (double)SDL_GetPerformanceFrequency();
 	}
 	if (every <= 0.0)
 		return;
-	now = (double)SDL_GetPerformanceCounter() / frequency;
+	/* (the monotonic clock, which the Android build's guest has, not SDL's) */
+	clock_gettime(CLOCK_MONOTONIC, &clock_now);
+	now = (double)clock_now.tv_sec + (double)clock_now.tv_nsec / 1e9;
 	if (last > 0.0 && count < (long)(sizeof(times) / sizeof(times[0])))
 		times[count++] = (float)((now - last) * 1000.0);
 	last = now;
