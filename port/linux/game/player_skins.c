@@ -28,6 +28,11 @@ What a skin's body cannot do (it is a campaign character's):
   biped's melee damage, as the cannon has none, in an unarmed blow's
   time, with its body's melee animation); it must be held 1.25 seconds
   to charge each shot, as an actor's is;
+  a Hunter moves as a player does, by its throttle (its animations step
+  only forward), and plays its move-front animation to the back and the
+  sides, which it has none for; its cannon shows the plasma pistol's HUD
+  and crosshair (it has none); in campaign co-op, where the level's
+  starting weapons are given instead, it keeps its own;
 - the Flood and the Hunter cannot drive or ride a vehicle (their animations
   have no seats in one), nor the Flood throw a grenade;
 - a stealth Elite is not camouflaged (it is as any player is, with the
