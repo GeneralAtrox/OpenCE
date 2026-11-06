@@ -250,6 +250,8 @@ static void skin_portrait_render(
 	render_model(model_index, 10000.f, node_matrices, NULL, change_colors, function_values, &lighting, &center,
 		half_height, NULL, 0, 0, SKIN_PORTRAIT_NO_PLANAR_FOG);
 	rasterizer_models_end();
+	/* (its transparent parts, as a view draws them: the first pass sorts) */
+	rasterizer_transparent_geometry_draw(TRUE);
 	rasterizer_transparent_geometry_draw(FALSE);
 	rasterizer_transparent_geometry_stop();
 	rasterizer_window_end();
