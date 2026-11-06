@@ -55,6 +55,7 @@ Only the host runs the AI, so all of this is the host's.
 /* port_config.c's */
 long config_integer(char const *name);
 char const *config_string(char const *name);
+void platform_log(char const *format, ...);
 
 /* ---------- constants */
 
@@ -152,6 +153,9 @@ static struct
 	short vehicle_count;
 	struct coop_kept_rider riders[MAXIMUM_KEPT_RIDERS];
 	short rider_count;
+	/* the extra enemies the level's squads would ask for, all told
+	(coop_enemies_extra_count), NONE until counted on the map */
+	long level_extra;
 } coop_enemies;
 
 /* ---------- private code */
@@ -426,6 +430,7 @@ void coop_enemies_new_game(
 		COOP_ENEMIES_MINIMUM_MULTIPLIER, COOP_ENEMIES_MAXIMUM_MULTIPLIER);
 	coop_enemies.mode = !strcmp(mode, "per_player") ? _coop_enemies_per_player :
 		!strcmp(mode, "multiplier") ? _coop_enemies_multiplier : _coop_enemies_none;
+	coop_enemies.level_extra = NONE;
 }
 
 void coop_enemies_reset(
@@ -433,6 +438,7 @@ void coop_enemies_reset(
 {
 	coop_enemies.vehicle_count = 0;
 	coop_enemies.rider_count = 0;
+	coop_enemies.level_extra = NONE;
 }
 
 short coop_enemies_extra_count(
@@ -441,7 +447,7 @@ short coop_enemies_extra_count(
 {
 	struct encounter_datum *encounter;
 	long extra, room;
-	short players;
+	short players = 1;
 
 	if (count <= 0 || !coop_enemies_on())
 		return 0;
@@ -458,6 +464,42 @@ short coop_enemies_extra_count(
 		extra = ((long)count * coop_enemies.percent * (players - 1) + 50) / 100;
 		extra = MIN(extra, (long)count * (COOP_ENEMIES_MAXIMUM_GROWTH - 1));
 	}
+	/* the room the actors have past the level's own is shared by all the
+	level's squads, each as much of its extra enemies as the room holds of
+	all of theirs (else the squads the level makes first, often far from
+	the players, took all of it, and the rest had none) */
+	if (coop_enemies.level_extra == NONE)
+	{
+		struct scenario *scenario = global_scenario_get();
+		short encounter_definition_index;
+
+		coop_enemies.level_extra = 0;
+		for (encounter_definition_index = 0; encounter_definition_index < scenario->encounters.count;
+			encounter_definition_index++)
+		{
+			struct encounter_definition *definition = TAG_BLOCK_GET_ELEMENT(&scenario->encounters,
+				encounter_definition_index, struct encounter_definition);
+			short squad_index;
+
+			for (squad_index = 0; squad_index < definition->squads.count; squad_index++)
+			{
+				struct squad_definition *squad = TAG_BLOCK_GET_ELEMENT(&definition->squads, squad_index,
+					struct squad_definition);
+
+				coop_enemies.level_extra += MAX(1, (squad->min_count + squad->max_count + 1) / 2);
+			}
+		}
+		coop_enemies.level_extra = coop_enemies.mode == _coop_enemies_multiplier ?
+			coop_enemies.level_extra * (coop_enemies.multiplier - 1) :
+			MIN((coop_enemies.level_extra * coop_enemies.percent * (MAX(players, 2) - 1) + 50) / 100,
+				coop_enemies.level_extra * (COOP_ENEMIES_MAXIMUM_GROWTH - 1));
+		platform_log("coop enemies: the level's squads would have %ld extra enemies; room for %d (%d%% of each squad's)",
+			coop_enemies.level_extra, (int)(MAXIMUM_ACTORS - COOP_ENEMIES_LEVEL_ACTORS),
+			coop_enemies.level_extra > 0 ? (int)MIN(100, (long)(MAXIMUM_ACTORS - COOP_ENEMIES_LEVEL_ACTORS) * 100 /
+				coop_enemies.level_extra) : 100);
+	}
+	if (coop_enemies.level_extra > MAXIMUM_ACTORS - COOP_ENEMIES_LEVEL_ACTORS)
+		extra = (extra * (MAXIMUM_ACTORS - COOP_ENEMIES_LEVEL_ACTORS) + coop_enemies.level_extra - 1) / coop_enemies.level_extra;
 	room = MAXIMUM_ACTORS - COOP_ENEMIES_LEVEL_ACTORS - actor_data->actual_count;
 	return (short)PIN(extra, 0, MAX(room, 0));
 }

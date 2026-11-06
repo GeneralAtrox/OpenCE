@@ -1378,6 +1378,34 @@ static void actor_update_end(
 	return;
 }
 
+/* port: the stock game gives one actor a timeslice a tick (its
+perception scan, path refresh, fight and position searches), enough for the
+twenty or so a level has awake; network co-op's extra enemies
+(port/linux/game/coop_enemies.c) make hundreds, each of which then waited
+tens of seconds for one, and stood about. Past ACTOR_PORT_STOCK_ACTORS
+awake, the actors that have waited longest past ACTOR_PORT_TIMESLICE_WAIT
+ticks get more, one a tick for every ACTOR_PORT_ACTORS_PER_TIMESLICE awake,
+so each thinks about as often as in a stock level. With fewer, the game is
+the stock one */
+enum
+{
+	ACTOR_PORT_STOCK_ACTORS = 32,
+	ACTOR_PORT_ACTORS_PER_TIMESLICE = 12,
+	ACTOR_PORT_TIMESLICE_WAIT = 23,
+};
+
+static struct
+{
+	/* the actors awake (not dormant) last tick, and so far this tick */
+	long awake;
+	long awake_counting;
+	/* the timeslices past the stock one this tick may give, and has */
+	short budget;
+	short given;
+	/* ticks since the last log of the AI's load */
+	short log_ticks;
+} actor_port_timeslices;
+
 static boolean actor_get_timeslice(
 	long actor_index)
 {
@@ -1399,6 +1427,8 @@ static boolean actor_get_timeslice(
 	}
 
 	actor->meta.service_timer += jumping ? 3 : 1;
+	if (!actor->meta.dormant)
+		actor_port_timeslices.awake_counting++;
 
 	if (!ai_globals->time_given_this_frame &&
 		actor->meta.service_timer > ai_globals->last_highest_service_timer &&
@@ -1406,6 +1436,15 @@ static boolean actor_get_timeslice(
 	{
 		actor->meta.service_timer = 0;
 		ai_globals->time_given_this_frame = TRUE;
+		result = TRUE;
+	}
+	/* port: (more actors than the stock game had: above) */
+	else if (!actor->meta.dormant &&
+		actor_port_timeslices.given < actor_port_timeslices.budget &&
+		actor->meta.service_timer > ACTOR_PORT_TIMESLICE_WAIT)
+	{
+		actor->meta.service_timer = 0;
+		actor_port_timeslices.given++;
 		result = TRUE;
 	}
 	else if (actor->meta.service_timer > ai_globals->current_highest_service_timer)
@@ -4249,6 +4288,35 @@ void actors_update(
 	ai_globals->last_highest_service_timer = ai_globals->current_highest_service_timer;
 	ai_globals->current_highest_service_timer = 0;
 	ai_globals->time_given_this_frame = FALSE;
+	/* port: the timeslices past the stock one (actor_get_timeslice), and
+	every ten seconds with many actors, the AI's load in the log */
+	actor_port_timeslices.awake = actor_port_timeslices.awake_counting;
+	actor_port_timeslices.awake_counting = 0;
+	actor_port_timeslices.budget = (short)(actor_port_timeslices.awake > ACTOR_PORT_STOCK_ACTORS ?
+		(actor_port_timeslices.awake - ACTOR_PORT_STOCK_ACTORS / 2) / ACTOR_PORT_ACTORS_PER_TIMESLICE : 0);
+	actor_port_timeslices.given = 0;
+	if (++actor_port_timeslices.log_ticks >= 10 * TICKS_PER_SECOND)
+	{
+		actor_port_timeslices.log_ticks = 0;
+		if (actor_data->actual_count > ACTOR_PORT_STOCK_ACTORS)
+		{
+			extern void platform_log(char const *format, ...);
+			struct actor_iterator counter;
+			struct actor_datum *counted;
+			long fighting = 0;
+
+			actor_iterator_new(&counter, TRUE);
+			while ((counted = actor_iterator_next(&counter)) != NULL)
+			{
+				if (counted->state.action == _actor_action_fight)
+					fighting++;
+			}
+			platform_log("ai: %ld actors, %ld awake, %ld fighting; %d timeslices a tick (the stock game's 1 and %d more); "
+				"%ld of %d props", (long)actor_data->actual_count, actor_port_timeslices.awake, fighting,
+				1 + actor_port_timeslices.budget, (int)actor_port_timeslices.budget, (long)prop_data->actual_count,
+				(int)HALO_PORT_MAXIMUM_PROPS);
+		}
+	}
 
 	actor_iterator_new(&iterator, TRUE);
 	while ((actor = actor_iterator_next(&iterator)) != NULL)
