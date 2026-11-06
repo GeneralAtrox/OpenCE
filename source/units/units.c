@@ -10773,6 +10773,49 @@ static boolean unit_animation_set_state(
 			}
 		}
 
+		/* port: a player's body of a campaign character (a Hunter's) may
+		have no animation for moving back or to a side, or wounded, as its
+		actor never needs one: it plays its moving front one instead, so the
+		player can strafe and back away rather than the state being refused
+		(port/linux/game/player_skins.c) */
+		if (animation_index == NONE && weapon_class_animation_index != NONE)
+		{
+			extern boolean player_skins_unit_is_body(long unit_index);
+			extern void platform_log(char const *format, ...);
+			short fallback_index = NONE;
+
+			switch (weapon_class_animation_index)
+			{
+			case _unit_weapon_class_animation_moving_back:
+			case _unit_weapon_class_animation_moving_left:
+			case _unit_weapon_class_animation_moving_right:
+			case _unit_weapon_class_animation_moving_wounded_front:
+			case _unit_weapon_class_animation_moving_wounded_back:
+			case _unit_weapon_class_animation_moving_wounded_left:
+			case _unit_weapon_class_animation_moving_wounded_right:
+				fallback_index = _unit_weapon_class_animation_moving_front;
+				break;
+			default:
+				break;
+			}
+			if (fallback_index != NONE && fallback_index < weapon_class->animations.count &&
+				player_skins_unit_is_body(unit_index))
+			{
+				static unsigned long reported = 0;
+
+				animation_index = animation_graph_animation_index_get(&weapon_class->animations)[fallback_index].animation_index;
+				if (weapon_class_animation_index < 32 && !(reported & (1UL << weapon_class_animation_index)))
+				{
+					reported |= 1UL << weapon_class_animation_index;
+					platform_log("player skins: %s has no '%s %s' animation: it plays '%s'",
+						tag_name_strip_path(unit_definition->object.animation_graph.name), weapon_class->label,
+						animation_list_get_string(&weapon_class_animation_list, weapon_class_animation_index),
+						animation_index == NONE ? "nothing either" :
+						animation_list_get_string(&weapon_class_animation_list, fallback_index));
+				}
+			}
+		}
+
 		if (debug_unit_animations &&
 			unit->object.type == _object_type_biped &&
 			animation_index == NONE)

@@ -40,6 +40,8 @@ What a skin's body cannot do (it is a campaign character's):
 #include "game/game_engine.h"
 #include "game/players.h"
 #include "units/units.h"
+#include "units/unit_definitions.h"
+#include "objects/objects.h"
 #include "items/weapons.h"
 #include "items/weapon_definitions.h"
 #include "tag_files/tag_groups.h"
@@ -390,6 +392,57 @@ static short player_skin_body_of_unit(
 		return NONE;
 
 	return skin_body_of_definition(unit->definition_index);
+}
+
+/* a campaign level's starting profile was given (players.c's
+player_add_equipment, which deletes the unit's weapons first): a skin's
+body left with no weapon, as a Hunter is (it holds none of the level's
+human weapons), gets its biped's initial weapons back, as the unit had
+when made (a Hunter's: its fuel rod cannon) */
+void player_skins_equipment_given(
+	long unit_index)
+{
+	short body = player_skin_body_of_unit(unit_index);
+	struct unit_datum *unit;
+	struct unit_definition *definition;
+	short index;
+	short given = 0;
+
+	if (body == NONE)
+		return;
+	unit = unit_get(unit_index);
+	for (index = 0; index < MAXIMUM_WEAPONS_PER_UNIT; index++)
+	{
+		if (unit->unit.weapon_object_indices[index] != NONE)
+			return;
+	}
+	definition = unit_definition_get(unit->definition_index);
+	for (index = 0; index < definition->unit.initial_weapons.count; index++)
+	{
+		struct unit_initial_weapon *initial_weapon = TAG_BLOCK_GET_ELEMENT(&definition->unit.initial_weapons, index,
+			struct unit_initial_weapon);
+		struct object_placement_data placement_data;
+		long weapon_index;
+
+		if (initial_weapon->weapon.index == NONE)
+			continue;
+		object_placement_data_new(&placement_data, initial_weapon->weapon.index, unit_index);
+		weapon_index = object_new(&placement_data);
+		if (weapon_index == NONE)
+			continue;
+		if (object_get(weapon_index)->object.type != _object_type_weapon ||
+			!unit_add_weapon_to_inventory(unit_index, weapon_index, given == 0 ? 2 : 0))
+		{
+			object_delete(weapon_index);
+			continue;
+		}
+		given++;
+	}
+	skin_weapons_fill(unit_index);
+	platform_log("player skins: %s held none of the level's starting weapons: given its own %d", skin_body_bipeds[body],
+		(int)given);
+
+	return;
 }
 
 boolean player_skins_unit_is_body(

@@ -4779,6 +4779,14 @@ void player_add_equipment(
 				}
 			}
 
+			/* port: a skin's body that could hold none of the profile's
+			weapons (a Hunter's: the reset deleted its own fuel rod cannon)
+			gets its biped's own back (port/linux/game/player_skins.c) */
+			{
+				extern void player_skins_equipment_given(long unit_index);
+
+				player_skins_equipment_given(unit_index);
+			}
 			unit->object.shield_vitality +=
 				starting_profile->starting_shield_modifier;
 			unit->object.body_vitality +=
