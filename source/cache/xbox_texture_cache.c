@@ -391,11 +391,6 @@ void texture_cache_bitmap_new(
 		"c:\\halo\\SOURCE\\cache\\xbox_texture_cache.c",
 		157,
 		!TEST_FLAG(bitmap->flags, _bitmap_cached_bit));
-	/* port: a bitmap made again (the skins' tags, added to a map's after
-	its own were made: port/linux/game/skin_tags.c) keeps its offset, which
-	already has its pixel data's added */
-	if (TEST_FLAG(bitmap->flags, _bitmap_cached_bit))
-		return;
 	SET_FLAG(bitmap->flags, _bitmap_cached_bit, TRUE);
 	bitmap->cache_block_index = NONE;
 	bitmap->base_address = NULL;
