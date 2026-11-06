@@ -6675,6 +6675,11 @@ extern long ui_widget_port_spinner_first_available(struct widget_instance *widge
 extern short player_skins_local_choice(long local_player_index);
 extern wchar_t const *player_skins_name(short skin);
 extern short player_skins_local_step(long local_player_index, short direction);
+extern char const *player_skins_portrait_biped(short skin, real_rgb_color *rank_color, unsigned char *ranked);
+/* (skin_portraits.c) a body drawn in a box this frame, after the menus */
+extern unsigned char skin_portraits_note(rectangle2d const *bounds, char const *biped_name,
+	real_rgb_color const *color);
+extern long halo_screen_ui_offset_current(void);
 
 /* (xinput_sdl.c) the keyboard's SPACE held; the keyboard plays player 1
 alone; whether it shares port 0 with a gamepad; how many gamepads there
@@ -7050,6 +7055,57 @@ static void join4_update(struct widget_instance *widget)
 static long join4_tag(void)
 {
 	return tag_loaded('DeLa', JOIN4_NAME);
+}
+
+/* a quarter's picture of its player (the Xbox's Master Chief in their
+color), and the quarter's skin's text's top in it (tools/port_settings.py's
+JOIN4_SKIN_Y) */
+#define JOIN4_PICTURE_NAME \
+	"ui\\shell\\main_menu\\multiplayer_type_select\\split_screen\\4way_profile_select\\qtr_screen_profile_color_pic"
+#define JOIN4_SKIN_Y 132
+
+/* (ui_widget.c) ADD PLAYER's picture of a quarter's player: their skin's
+body in their color, or their Elite rank's, drawn in the picture's box
+after the menus (skin_portraits.c), above the quarter's skin's text; FALSE
+for another widget, or a body the menus' map has not (the picture is drawn) */
+unsigned char menu_functions_join4_picture(struct widget_instance const *widget, rectangle2d const *bounds,
+	short parent_top, short width, short height)
+{
+	struct widget_instance const *quarter = widget->parent;
+	long tag = widget->definition_tag_index;
+	struct player_profile profile;
+	real_rgb_color color;
+	real_rgb_color rank_color;
+	unsigned char ranked = FALSE;
+	rectangle2d box = *bounds;
+	long extra = halo_screen_ui_offset_current();
+	short controller;
+	char const *biped;
+
+	if (!quarter || !quarter->parent || tag == NONE || quarter->parent->definition_tag_index != join4_tag() ||
+		(tag != tag_loaded('DeLa', JOIN4_PICTURE_NAME) && tag != tag_loaded('DeLa', JOIN4_PICTURE_NAME "_selected")))
+	{
+		return FALSE;
+	}
+	controller = quarter->local_player_index;
+	if (controller < 0 || controller >= JOIN4_QUARTERS)
+		return FALSE;
+	if (width > 0 && box.x1 > box.x0 + width)
+		box.x1 = (short)(box.x0 + width);
+	if (height > 0 && box.y1 > box.y0 + height)
+		box.y1 = (short)(box.y0 + height);
+	if (box.y1 > parent_top + JOIN4_SKIN_Y)
+		box.y1 = (short)(parent_top + JOIN4_SKIN_Y);
+	if (box.x1 - box.x0 < 16 || box.y1 - box.y0 < 16)
+		return FALSE;
+	box.x0 = (short)(box.x0 + extra);
+	box.x1 = (short)(box.x1 + extra);
+	memset(&profile, 0, sizeof(profile));
+	player_ui_get_active_player_profile(controller, &profile);
+	color = player_profile_get_rgb_color(profile.primary_color_index);
+	biped = player_skins_portrait_biped(player_skins_local_choice(controller), &rank_color, &ranked);
+
+	return skin_portraits_note(&box, biped, ranked ? &rank_color : &color);
 }
 
 /* (ui_widget.c) whether the screen reads every controller's events, not

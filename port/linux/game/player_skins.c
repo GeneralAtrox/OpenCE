@@ -292,6 +292,21 @@ short player_skins_valid(
 	return skin > _player_skin_chief && skin < NUMBER_OF_PLAYER_SKINS ? skin : _player_skin_chief;
 }
 
+/* port: (menu_functions.c's ADD PLAYER portraits, skin_portraits.c) */
+char const *player_skins_portrait_biped(
+	short skin,
+	real_rgb_color *rank_color,
+	unsigned char *ranked)
+{
+	struct player_skin_definition const *definition = &player_skin_definitions[player_skins_valid(skin)];
+
+	*ranked = definition->color.red >= 0.f;
+	if (*ranked)
+		*rank_color = definition->color;
+
+	return definition->body == _skin_body_chief ? PLAYER_SKINS_PORTRAIT_CHIEF : skin_body_bipeds[definition->body];
+}
+
 long player_skins_unit_definition(
 	long player_index,
 	long default_definition_index)

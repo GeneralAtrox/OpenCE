@@ -34,6 +34,12 @@ short player_skins_local_choice(long local_player_index);
 /* a skin a network player says it has, as the host takes it: one of
 player_skin, else the Master Chief's */
 short player_skins_valid(short skin);
+/* port: Master Chief's biped for his portrait on ADD PLAYER: the
+campaign's, which skin_tags.c copies to the menus' map with the others */
+#define PLAYER_SKINS_PORTRAIT_CHIEF "characters\\cyborg\\cyborg"
+/* port: the biped a skin's portrait shows, and its rank's armor color
+(FALSE: the player's own) */
+char const *player_skins_portrait_biped(short skin, real_rgb_color *rank_color, unsigned char *ranked);
 /* the skin's name in the menus ("MASTER CHIEF") */
 wchar_t const *player_skins_name(short skin);
 /* the local player's next skin (direction 1) or previous (-1), chosen

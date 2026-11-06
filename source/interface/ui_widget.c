@@ -7156,6 +7156,11 @@ static void ui_widgets_process_mouse(
 	return;
 }
 
+/* port: ADD PLAYER's picture of a player, their skin's body drawn in its
+box instead (port/linux/game/menu_functions.c) */
+unsigned char menu_functions_join4_picture(struct widget_instance const *widget, rectangle2d const *bounds,
+	short parent_top, short width, short height);
+
 static void widget_instance_render_recursive(
 	struct widget_instance *widget,
 	rectangle2d *clip_rect,
@@ -7204,6 +7209,18 @@ static void widget_instance_render_recursive(
 		definition->background_bitmap.index,
 		0,
 		frame_index);
+	/* port: (ADD PLAYER's picture of a player: their skin's body instead) */
+	if (bitmap)
+	{
+		rectangle2d portrait = definition->bounds;
+
+		offset_rectangle2d(&portrait, offset.x, offset.y);
+		if (menu_functions_join4_picture(widget, &portrait, (short)(offset.y - widget->vertical_offset),
+				bitmap->width, bitmap->height))
+		{
+			bitmap = NULL;
+		}
+	}
 	if (bitmap)
 	{
 		real alpha = alpha_modifier;

@@ -85,6 +85,7 @@ enum
 	/* a cache file's header type (cache_file_header's reserved60) */
 	_cache_file_type_solo = 0,
 	_cache_file_type_multiplayer = 1,
+	_cache_file_type_main_menu = 2,
 	/* a vertex or index buffer's header (a D3D resource: Common, Data, Lock) */
 	BUFFER_SIZE = 12,
 	MAXIMUM_WALK_DEPTH = 24,
@@ -95,7 +96,8 @@ enum
 	INFLATE_IN_BYTES = 0x10000,
 	INFLATE_OUT_BYTES = 0x40000,
 
-	SKIN_PACK_VERSION = 1,
+	/* (2: Master Chief's biped, for the menus' map) */
+	SKIN_PACK_VERSION = 2,
 
 	REMAP_UNSEEN = -2,
 	REMAP_PENDING = -3,
@@ -112,7 +114,8 @@ static unsigned long const skin_excluded_groups[] =
 };
 
 /* the bipeds copied (player_skins.c's skins' bodies), whose tags bring the
-rest (a Hunter's: its fuel rod cannon) */
+rest (a Hunter's: its fuel rod cannon); and to the menus' map alone, for
+ADD PLAYER's portraits (skin_portraits.c), Master Chief's */
 static char const *const skin_root_bipeds[] =
 {
 	"characters\\elite\\elite",
@@ -120,16 +123,20 @@ static char const *const skin_root_bipeds[] =
 	"characters\\floodcombat_human\\floodcombat_human",
 	"characters\\floodcombat elite\\floodcombat elite",
 	"characters\\hunter\\hunter",
+	PLAYER_SKINS_PORTRAIT_CHIEF,
 	NULL
 };
+/* (skin_root_bipeds' Master Chief: copied to the menus' map alone) */
+#define SKIN_ROOT_PORTRAIT_CHIEF 5
 #define SKIN_ROOTS_ALL ((1UL << (NUMBEROF(skin_root_bipeds) - 1)) - 1)
 
 /* the bodies left out first when there is no room for all of them, in a
 map's tag cache or below it (no stock map: a map with none of them takes
 3.9 MB and below it are 3.3 MB, but every campaign level has some): the
 stealth Elite, the Flood, the Elite; the Hunter last. Every machine leaves
-out the same: the room is the map's */
-static short const skin_drop_order[] = { 1, 2, 3, 0, 4 };
+out the same: the room is the map's. On the menus' map Master Chief's goes
+first: his portrait is the stock picture's */
+static short const skin_drop_order[] = { SKIN_ROOT_PORTRAIT_CHIEF, 1, 2, 3, 0, 4 };
 
 /* rasterizer_geometry.c's rasterizer_vertex_type_sizes */
 static short const skin_vertex_type_sizes[] =
@@ -1415,7 +1422,8 @@ boolean skin_tags_import(
 	tag_validate_set_below(0);
 	/* (a campaign level only in co-op: a network game's, game_connection set
 	before its level loads) */
-	if (!(header_type == _cache_file_type_multiplayer ||
+	/* port: (and the menus' map, for ADD PLAYER's portraits) */
+	if (!(header_type == _cache_file_type_multiplayer || header_type == _cache_file_type_main_menu ||
 		(header_type == _cache_file_type_solo && (game_connection() == _game_connection_network_server ||
 			game_connection() == _game_connection_network_client))) ||
 		!map_name_text || !_stricmp(map_name_text, SKIN_DONOR_MAP))
@@ -1443,6 +1451,8 @@ boolean skin_tags_import(
 
 	/* (a map that has every skin's biped plays its own; one with some, a
 	campaign level's, keeps its own of those, import_reference) */
+	if (header_type != _cache_file_type_main_menu)
+		import->skipped |= 1UL << SKIN_ROOT_PORTRAIT_CHIEF;
 	for (index = 0; skin_root_bipeds[index]; index++)
 	{
 		if (map_tag_find(import, 'bipd', skin_root_bipeds[index]) != NONE)

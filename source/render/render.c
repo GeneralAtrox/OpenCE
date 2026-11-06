@@ -690,6 +690,10 @@ static void render_player_frame(
 	return;
 }
 
+/* port: ADD PLAYER's portraits, after the menus
+(port/linux/game/skin_portraits.c) */
+void skin_portraits_render(void);
+
 void render_frame(
 	struct render_window *windoze,
 	short window_count,
@@ -744,6 +748,8 @@ void render_frame(
 		render_nonplayer_frame(window, window_type);
 	}
 
+	/* port: (ADD PLAYER's portraits) */
+	skin_portraits_render();
 	halo_screen_ui_offset(TRUE);
 	progress_bar_eachframe();
 	halo_screen_ui_offset(FALSE);
