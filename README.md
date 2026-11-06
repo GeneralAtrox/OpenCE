@@ -17,7 +17,7 @@ The work is on the `split16` branch.
   - Elites in each colour, or by rank: minor, major, spec ops, zealot and stealth.
   - Flood combat forms (human and Elite).
   - The Hunter. Its fuel rod cannon never runs out, charges before each shot, reloads after five, and it melees with its shield.
-- **Choose a skin while joining.** On the ADD PLAYER screen, X changes a joining player's skin and Y makes a new profile. A controller with no free profile gets one made for it. Profiles another player holds, and the game's unusable defaults, are hidden.
+- **Choose a skin while joining.** On the ADD PLAYER screen, each player's picture is a 3D render of the body they chose, X changes it, and Y makes a new profile. A controller with no free profile gets one made for it. Profiles another player holds, and the game's unusable defaults, are hidden.
 - **A pause menu that fits.** In co-op split screen, each player's pause menu is drawn whole inside their own view.
 
 The skin bodies are copied at load time from your own Two Betrayals map (`c40.map`). A stock multiplayer map has them all. A co-op campaign level gets the ones it lacks, in memory of their own below the level's tag cache, so every body plays on every level. Custom Edition maps always play Master Chief.
