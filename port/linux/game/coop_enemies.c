@@ -474,10 +474,10 @@ short coop_enemies_extra_count(
 		short encounter_definition_index;
 
 		coop_enemies.level_extra = 0;
-		for (encounter_definition_index = 0; encounter_definition_index < scenario->encounters.count;
+		for (encounter_definition_index = 0; encounter_definition_index < scenario->ai_encounters.count;
 			encounter_definition_index++)
 		{
-			struct encounter_definition *definition = TAG_BLOCK_GET_ELEMENT(&scenario->encounters,
+			struct encounter_definition *definition = TAG_BLOCK_GET_ELEMENT(&scenario->ai_encounters,
 				encounter_definition_index, struct encounter_definition);
 			short squad_index;
 
