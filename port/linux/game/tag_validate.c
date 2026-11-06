@@ -153,7 +153,8 @@ struct tag_validate_custom_edition_header
 	unsigned long signature;
 };
 
-typedef char verify_tag_validate_maximum_tag_cache_size[TAG_CACHE_SIZE <= TAG_VALIDATE_MAXIMUM_TAG_CACHE_SIZE ? 1 : -1];
+typedef char verify_tag_validate_maximum_tag_cache_size[
+	TAG_CACHE_SIZE + SKIN_TAGS_SIZE <= TAG_VALIDATE_MAXIMUM_TAG_CACHE_SIZE ? 1 : -1];
 typedef char verify_tag_validate_instance_size[sizeof(struct tag_validate_instance) == 0x20 ? 1 : -1];
 typedef char verify_tag_validate_custom_edition_header_size[
 	sizeof(struct tag_validate_custom_edition_header) == 0x28 ? 1 : -1];
@@ -216,7 +217,13 @@ static struct
 	boolean custom_edition;
 	char map_name[64];
 	long corrections;
+	/* the bytes below the header that are the tags' too (copies of tags
+	the map had no room for: skin_tags.c), and so where the claims begin */
+	unsigned long below;
+	byte *claims_base;
 } tag_validate_globals;
+/* (the next tags' below, tag_validate_set_below) */
+static unsigned long tag_validate_below;
 
 /* a bit for each byte of the tag cache that a tag's root, block or data
 holds */
@@ -380,7 +387,7 @@ static boolean claim(
 	void const *address,
 	unsigned long size)
 {
-	byte const *tag_cache = (byte const *)tag_validate_globals.header;
+	byte const *tag_cache = tag_validate_globals.claims_base;
 	unsigned long first = (unsigned long)((byte const *)address - tag_cache);
 	unsigned long end = first + size;
 	unsigned long bit;
@@ -423,8 +430,12 @@ static void unclaim(
 	unsigned long first,
 	unsigned long size)
 {
-	unsigned long end = first + size;
+	unsigned long end;
 	unsigned long bit;
+
+	/* (the claims begin below the header by below) */
+	first += tag_validate_globals.below;
+	end = first + size;
 
 	if (first > tag_validate_globals.tag_cache_size || size > tag_validate_globals.tag_cache_size - first)
 		return;
@@ -1422,6 +1433,7 @@ void tag_validate_custom_edition_note_structure_bsp(
 		tag_validate_pending_groups.count = 0;
 	memset(&tag_validate_globals, 0, sizeof(tag_validate_globals));
 	tag_validate_globals.header = tag_header;
+	tag_validate_globals.claims_base = tag_header;
 	tag_validate_globals.tag_data_size = (long)tag_data_bytes;
 	tag_validate_globals.tag_cache_size = TAG_VALIDATE_MAXIMUM_TAG_CACHE_SIZE;
 	tag_validate_globals.custom_edition = TRUE;
@@ -1568,9 +1580,14 @@ static void validation_begin(
 	tag_validate_globals.tag_data_size = tag_data_size;
 	tag_validate_globals.tag_cache_size = tag_cache_size;
 	tag_validate_globals.custom_edition = custom_edition;
+	/* (a stock map's tags may have copies below them: tag_validate_set_below) */
+	tag_validate_globals.below = custom_edition ? 0 : tag_validate_below;
+	tag_validate_globals.claims_base = (byte *)tag_header - tag_validate_globals.below;
+	tag_validate_globals.tag_cache_size += tag_validate_globals.below;
 	snprintf(tag_validate_globals.map_name, sizeof(tag_validate_globals.map_name), "%s", map_name);
 	memset(tag_validate_claims, 0, sizeof(tag_validate_claims));
-	validation_new(validation, tag_header, (unsigned long)tag_data_size);
+	validation_new(validation, tag_validate_globals.claims_base,
+		(unsigned long)tag_data_size + tag_validate_globals.below);
 
 	return;
 }
@@ -1686,14 +1703,15 @@ boolean tag_validate_structure_bsp(
 	if (!header || !instance || instance->group_tag != STRUCTURE_BSP_GROUP_TAG ||
 		size < (long)sizeof(*bsp_header) ||
 		tag_cache_offset < (unsigned long)tag_validate_globals.tag_data_size ||
-		tag_cache_offset > tag_validate_globals.tag_cache_size ||
-		(unsigned long)size > tag_validate_globals.tag_cache_size - tag_cache_offset)
+		tag_cache_offset > tag_validate_globals.tag_cache_size - tag_validate_globals.below ||
+		(unsigned long)size > tag_validate_globals.tag_cache_size - tag_validate_globals.below - tag_cache_offset)
 	{
 		tag_validate_refuse(&validation, "has a structure bsp outside the tag cache");
 		return FALSE;
 	}
 	/* (another bsp may have been where this one is) */
-	unclaim(tag_validate_globals.tag_data_size, tag_validate_globals.tag_cache_size - tag_validate_globals.tag_data_size);
+	unclaim(tag_validate_globals.tag_data_size,
+		tag_validate_globals.tag_cache_size - tag_validate_globals.below - tag_validate_globals.tag_data_size);
 
 	if (bsp_header->signature != STRUCTURE_BSP_HEADER_SIGNATURE ||
 		!claim(bsp_header, sizeof(*bsp_header)) ||
@@ -1733,9 +1751,9 @@ found to be a tag's root, block or data) */
 boolean tag_validate_claimed(
 	void const *address)
 {
-	unsigned long offset = (unsigned long)address - (unsigned long)tag_validate_globals.header;
+	unsigned long offset = (unsigned long)address - (unsigned long)tag_validate_globals.claims_base;
 
-	if (!tag_validate_globals.header || (unsigned long)address < (unsigned long)tag_validate_globals.header ||
+	if (!tag_validate_globals.header || (unsigned long)address < (unsigned long)tag_validate_globals.claims_base ||
 		offset >= tag_validate_globals.tag_cache_size)
 	{
 		return FALSE;
@@ -1751,10 +1769,10 @@ boolean tag_validate_any_claimed(
 	void const *address,
 	unsigned long size)
 {
-	unsigned long offset = (unsigned long)address - (unsigned long)tag_validate_globals.header;
+	unsigned long offset = (unsigned long)address - (unsigned long)tag_validate_globals.claims_base;
 	unsigned long bit;
 
-	if (!tag_validate_globals.header || (unsigned long)address < (unsigned long)tag_validate_globals.header ||
+	if (!tag_validate_globals.header || (unsigned long)address < (unsigned long)tag_validate_globals.claims_base ||
 		offset > tag_validate_globals.tag_cache_size || size > tag_validate_globals.tag_cache_size - offset)
 	{
 		return TRUE;
@@ -1936,6 +1954,22 @@ void *tag_validate_index_buffer_data(
 		data = buffer_data(validation->extra_index_buffers, validation->extra_index_buffer_count, buffer);
 
 	return data;
+}
+
+void tag_validate_set_below(
+	unsigned long below)
+{
+	tag_validate_below = below;
+
+	return;
+}
+
+void *tag_validate_tags_header(
+	struct tag_validation *validation)
+{
+	void *header = tag_validate_globals.header;
+
+	return header && region_contains(validation, header, sizeof(struct tag_validate_header)) ? header : NULL;
 }
 
 void tag_validate_set_extra_buffers(

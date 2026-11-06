@@ -98,7 +98,9 @@ enum
 
 	/* the largest tag cache a map's tags are checked in: a Custom Edition
 	map's (cache_file_formats.h, CUSTOM_EDITION_TAG_CACHE_BYTES) */
-	TAG_VALIDATE_MAXIMUM_TAG_CACHE_SIZE = 0x01700000,
+	/* (a Custom Edition map's 0x1700000; a stock map's tag cache with the
+	skins' tags below it, physical_memory_map.h) */
+	TAG_VALIDATE_MAXIMUM_TAG_CACHE_SIZE = 0x01A00000,
 	/* the file ranges a Custom Edition map's bitmap pixels and sound samples
 	may be in (tag_validate_custom_edition_tags) */
 	MAXIMUM_TAG_VALIDATE_FILE_RANGES = 4,
@@ -345,6 +347,11 @@ boolean tag_validate_structure_bsp(
 a map's after its own (skin_tags.c), which their parts use as a map's use
 its header's: the next tag_validate_tags checks them with the header's.
 NULL and 0 for none */
+/* the next stock map's tags have below bytes of theirs below the header
+(skin_tags.c's copies, when its tag cache has no room for them) */
+void tag_validate_set_below(unsigned long below);
+/* the tags' header, if the region being checked holds it, else NULL */
+void *tag_validate_tags_header(struct tag_validation *validation);
 void tag_validate_set_extra_buffers(
 	void *vertex_buffers,
 	long vertex_buffer_count,

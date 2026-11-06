@@ -247,6 +247,11 @@ struct skin_import
 	/* the skin_root_bipeds not gathered (bits): the map's own, and those
 	left out for room (import_retry) */
 	unsigned long skipped;
+	/* the map's own of skin_root_bipeds (bits) */
+	unsigned long map_roots;
+	/* the copies go below the tag cache (SKIN_TAGS_BASE_ADDRESS), the map's
+	having no room for them (import_retry) */
+	boolean below;
 };
 
 static struct
@@ -266,6 +271,8 @@ static struct
 	long vertex_header_count;
 	long index_header_count;
 	boolean registered;
+	/* where the copies' buffers end (Android's static buffers) */
+	byte const *buffers_end;
 	/* the skins' cache file, open while its tags are */
 	FILE *pack;
 	struct skin_range *ranges;
@@ -498,6 +505,22 @@ static boolean import_retry(
 
 	if (!import->failure || strcmp(import->failure, "no room in the tag cache"))
 		return FALSE;
+	/* (first every body again, below the tag cache) */
+	if (!import->below && physical_memory_get_skin_tags_base_address())
+	{
+		platform_log("player skins: %s has %lu bytes free in its tag cache: the bodies go below it (%lu bytes)",
+			map_name_text, import->out_limit, (unsigned long)SKIN_TAGS_SIZE);
+		import->below = TRUE;
+		import->skipped &= ~SKIN_ROOTS_ALL | import->map_roots;
+		import->order_count = 0;
+		import->out_used = 0;
+		import->part_count = 0;
+		import->vertex_header_count = 0;
+		import->index_header_count = 0;
+		import->copying = FALSE;
+		import->failure = NULL;
+		return TRUE;
+	}
 	for (index = 0; index < (short)NUMBEROF(skin_drop_order); index++)
 	{
 		short root = skin_drop_order[index];
@@ -506,8 +529,8 @@ static boolean import_retry(
 			continue;
 		if (((import->skipped | (1UL << root)) & SKIN_ROOTS_ALL) == SKIN_ROOTS_ALL)
 		{
-			platform_log("player skins: %s has %lu bytes free in its tag cache, too few for %s (%ld tags, %lu bytes copied)",
-				map_name_text, import->out_limit, skin_root_bipeds[root], import->order_count, import->out_used);
+			platform_log("player skins: %s has %lu bytes free %s, too few for %s (%ld tags, %lu bytes copied)",
+				map_name_text, import->out_limit, import->below ? "below its tag cache" : "in its tag cache", skin_root_bipeds[root], import->order_count, import->out_used);
 			return FALSE;
 		}
 		import->skipped |= 1UL << root;
@@ -1383,6 +1406,7 @@ boolean skin_tags_import(
 	skin_free(skin_tags_globals.ranges);
 	memset(&skin_tags_globals, 0, sizeof(skin_tags_globals));
 	tag_validate_set_extra_buffers(NULL, 0, NULL, 0);
+	tag_validate_set_below(0);
 	/* (a campaign level only in co-op: a network game's, game_connection set
 	before its level loads) */
 	if (!(header_type == _cache_file_type_multiplayer ||
@@ -1418,6 +1442,7 @@ boolean skin_tags_import(
 		if (map_tag_find(import, 'bipd', skin_root_bipeds[index]) != NONE)
 			import->skipped |= 1UL << index;
 	}
+	import->map_roots = import->skipped;
 	if (import->skipped == SKIN_ROOTS_ALL)
 		goto done;
 
@@ -1425,8 +1450,8 @@ boolean skin_tags_import(
 	limit = map_structure_bsp_limit(import, header);
 	if (limit <= start)
 	{
-		platform_log("player skins: no room in %s's tag cache", map_name_text);
-		goto done;
+		/* (none in it: below it, import_retry) */
+		limit = start;
 	}
 
 	pack = pack_open(&pack_header);
@@ -1453,9 +1478,26 @@ retry:
 		goto done;
 	}
 
-	/* where they go: the table, the buffers' headers, then the tags */
-	import->out = (byte *)start;
-	import->out_limit = limit - start;
+	/* where they go: the table, the buffers' headers, then the tags; after
+	the map's tags, or below the tag cache (SKIN_TAGS_BASE_ADDRESS, the
+	region's start: with the tags one run of memory up to them) */
+	if (import->below)
+	{
+		import->out = (byte *)physical_memory_get_skin_tags_base_address();
+		import->out_limit = SKIN_TAGS_SIZE;
+	}
+	else
+	{
+		import->out = (byte *)start;
+		import->out_limit = limit - start;
+		if (!import->out_limit)
+		{
+			import_fail(import, "no room in the tag cache");
+			if (import_retry(import, map_name_text))
+				goto retry;
+			goto done;
+		}
+	}
 	{
 		long new_count = import->map_count + import->order_count;
 		long first_salt = 0;
@@ -1546,7 +1588,19 @@ retry:
 		skin_tags_globals.index_header_count = import->index_header_count;
 		header->instances = (unsigned long)instances;
 		header->tag_count = new_count;
-		*tag_data_size = (long)((start + import->out_used + 15) & ~15UL) - SKIN_LINK_ADDRESS;
+		if (import->below)
+		{
+			/* (the map's tags stay the tag cache's; the checks look below it
+			too) */
+			memset(import->out + import->out_used, 0, import->out_limit - import->out_used);
+			skin_tags_globals.buffers_end = (byte const *)SKIN_LINK_ADDRESS;
+			tag_validate_set_below(SKIN_LINK_ADDRESS - (unsigned long)import->out);
+		}
+		else
+		{
+			*tag_data_size = (long)((start + import->out_used + 15) & ~15UL) - SKIN_LINK_ADDRESS;
+			skin_tags_globals.buffers_end = (byte const *)SKIN_LINK_ADDRESS + TAG_CACHE_SIZE;
+		}
 	}
 
 	/* their bitmaps' and sounds' bytes, from the cache file */
@@ -1566,8 +1620,9 @@ retry:
 	skin_tags_globals.imported = TRUE;
 	tag_validate_set_extra_buffers(skin_tags_globals.vertex_headers, skin_tags_globals.vertex_header_count,
 		skin_tags_globals.index_headers, skin_tags_globals.index_header_count);
-	platform_log("player skins: %ld tags of Two Betrayals' added to %s (%lu bytes, %ld models' parts)",
-		skin_tags_globals.count, map_name_text, import->out_used, import->part_count);
+	platform_log("player skins: %ld tags of Two Betrayals' added to %s (%lu bytes, %ld models' parts%s)",
+		skin_tags_globals.count, map_name_text, import->out_used, import->part_count,
+		import->below ? ", below its tag cache" : "");
 	success = TRUE;
 
 done:
@@ -1625,9 +1680,9 @@ void skin_tags_loaded(
 	tags_header_register_vertex_and_index_buffers((struct cache_file_tag_header *)&buffers);
 #ifdef HALO_ANDROID
 	xgpu_static_buffers_add(skin_tags_globals.vertex_headers, skin_tags_globals.vertex_header_count, BUFFER_SIZE, 0,
-		(byte const *)SKIN_LINK_ADDRESS + TAG_CACHE_SIZE);
+		skin_tags_globals.buffers_end);
 	xgpu_static_buffers_add(skin_tags_globals.index_headers, skin_tags_globals.index_header_count, BUFFER_SIZE, 1,
-		(byte const *)SKIN_LINK_ADDRESS + TAG_CACHE_SIZE);
+		skin_tags_globals.buffers_end);
 #endif
 	skin_tags_globals.registered = TRUE;
 	tag_validate_set_extra_buffers(NULL, 0, NULL, 0);
@@ -1684,6 +1739,7 @@ void skin_tags_unloaded(
 	skin_free(skin_tags_globals.ranges);
 	memset(&skin_tags_globals, 0, sizeof(skin_tags_globals));
 	tag_validate_set_extra_buffers(NULL, 0, NULL, 0);
+	tag_validate_set_below(0);
 
 	return;
 }

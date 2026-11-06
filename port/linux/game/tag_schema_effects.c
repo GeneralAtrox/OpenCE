@@ -2113,25 +2113,15 @@ static long tag_index_get(
 		unsigned long checksum;
 		long tag_count;
 	};
-	unsigned long low = 0;
-	unsigned long high = (unsigned long)root;
 	struct tag_header const *header;
 	long index;
 
 	if (!tag_validate_contains(validation, root, 1))
 		return NONE;
-	/* (the region's first byte) */
-	while (low < high)
-	{
-		unsigned long middle = low + (high - low) / 2;
-
-		if (tag_validate_contains(validation, (void const *)middle, 1))
-			high = middle;
-		else
-			low = middle + 1;
-	}
-	header = (struct tag_header const *)low;
-	if (!tag_validate_contains(validation, header, sizeof(*header)) ||
+	/* (the tags' header: the region may begin below it, with the skins'
+	copies, skin_tags.c) */
+	header = tag_validate_tags_header(validation);
+	if (!header || !tag_validate_contains(validation, header, sizeof(*header)) ||
 		header->tag_count <= 0 || header->tag_count > UNSIGNED_SHORT_MAX ||
 		!tag_validate_contains(validation, header->instances,
 			(unsigned long)header->tag_count * sizeof(struct tag_instance)))

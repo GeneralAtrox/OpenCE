@@ -68,8 +68,16 @@ struct physical_memory_map_globals
 /* ---------- globals */
 
 static struct physical_memory_map_globals physical_memory_map_globals;
+/* port: the skins' tags' place (physical_memory_map.h) */
+static void *physical_memory_skin_tags_base_address;
 
 /* ---------- public code */
+
+void *physical_memory_get_skin_tags_base_address(
+	void)
+{
+	return physical_memory_skin_tags_base_address;
+}
 
 void physical_memory_allocate(
 	void)
@@ -81,6 +89,12 @@ void physical_memory_allocate(
 	physical_memory_map_globals.tag_cache_base_address = XPhysicalAlloc(TAG_CACHE_SIZE, TAG_CACHE_BASE_ADDRESS & 0x7FFFFFFF, 0, PAGE_READWRITE);
 #line 50 "c:\\halo\\SOURCE\\cache\\physical_memory_map.c"
 	match_assert(__FILE__, __LINE__, (unsigned long)physical_memory_map_globals.tag_cache_base_address==TAG_CACHE_BASE_ADDRESS);
+
+	/* port: the skins' tags' place, below the tag cache (physical_memory_map.h);
+	without it, a map with no room for them in its tag cache has fewer bodies */
+	physical_memory_skin_tags_base_address = XPhysicalAlloc(SKIN_TAGS_SIZE, SKIN_TAGS_BASE_ADDRESS & 0x7FFFFFFF, 0, PAGE_READWRITE);
+	if ((unsigned long)physical_memory_skin_tags_base_address != SKIN_TAGS_BASE_ADDRESS)
+		physical_memory_skin_tags_base_address = NULL;
 
 	physical_memory_map_globals.texture_cache_base_address = XPhysicalAlloc(TEXTURE_CACHE_SIZE, -1, 0, PAGE_READWRITE | PAGE_WRITECOMBINE);
 #line 55 "c:\\halo\\SOURCE\\cache\\physical_memory_map.c"
