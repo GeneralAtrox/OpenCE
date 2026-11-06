@@ -338,6 +338,11 @@ own: the map's tags are then more, at indices a build before it does not
 have, and the objects the host makes of them (its players' bodies) name
 them by index.
 
+Then version 43 adds a mode to the gametype's options, Tag, You're It
+(`_game_mode_tag`: `port/linux/game/infection.c`), whose round and roles
+the host sends as Infection's: a build before it takes the mode as none and
+would play Slayer where its host plays Tag.
+
 `port/linux/network_format.txt` records the wire format of the current
 version (`tools/network_format.py`): `test_linux_port.py` fails when the
 sources' messages, kinds, bits, structs sent whole or the sizes of their

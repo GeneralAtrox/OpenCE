@@ -3585,6 +3585,12 @@ static void gametype_rules_text(long profile_index, wchar_t *text, short size)
 		else
 			usnprintf(text, size - 1, L"%s\r\nTeams\r\nUntil no human is left", kind);
 		break;
+	case _game_mode_tag:
+		if (options.time_limit > 0)
+			usnprintf(text, size - 1, L"%s\r\nOne player is it\r\nRound time: %d min", kind, options.time_limit);
+		else
+			usnprintf(text, size - 1, L"%s\r\nOne player is it\r\nNo time limit", kind);
+		break;
 	case _game_mode_gun_game:
 		usnprintf(text, size - 1, L"%s\r\nFree for all\r\nA kill with each weapon", kind);
 		break;
@@ -7211,8 +7217,8 @@ struct gametype_option
 static struct gametype_option const gametype_options[] =
 {
 	/* OPENCE OPTIONS (OpenCE's gametypes: game_modes.c) */
-	{ "oce_mode_spinner", _option_option_byte, OPTIONS_FIELD(mode), 0, 4,
-		{ _game_mode_none, _game_mode_swat, _game_mode_infection, _game_mode_gun_game } },
+	{ "oce_mode_spinner", _option_option_byte, OPTIONS_FIELD(mode), 0, 5,
+		{ _game_mode_none, _game_mode_swat, _game_mode_infection, _game_mode_gun_game, _game_mode_tag } },
 	{ "oce_hardcore_spinner", _option_option_byte, OPTIONS_FIELD(hardcore), 0, 2, { FALSE, TRUE } },
 	{ "inf_zombies_spinner", _option_option_byte, OPTIONS_FIELD(infection_initial_zombies), 0, 6, { 1, 2, 3, 4, 8, 16 } },
 	{ "inf_speed_spinner", _option_option_byte, OPTIONS_FIELD(infection_zombie_speed), 0, 6,
@@ -7711,11 +7717,11 @@ static boolean gametype_options_save(struct widget_instance *widget)
 	if (named(list, "op_team", 0))
 		vehicles_keep(list);
 	gametype_options_each(list, TRUE);
-	/* (OPENCE OPTIONS: Infection is played on teams, Gun Game free for all:
+	/* (OPENCE OPTIONS: Infection and Tag are played on teams, Gun Game free for all:
 	game_modes_variant_mode) */
 	if (named(list, "oce_mode_spinner", 0) && edit_variant()->game_engine_index == game_engine_slayer)
 	{
-		if (edit_options()->mode == _game_mode_infection)
+		if (edit_options()->mode == _game_mode_infection || edit_options()->mode == _game_mode_tag)
 			edit_variant()->universal_variant.teams = TRUE;
 		else if (edit_options()->mode == _game_mode_gun_game)
 			edit_variant()->universal_variant.teams = FALSE;

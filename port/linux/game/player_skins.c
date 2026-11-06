@@ -43,6 +43,10 @@ What a skin's body cannot do (it is a campaign character's):
   powerup);
 - in a team game every body has its team's color; the Elites' ranks show
   theirs only in a game without teams.
+
+In Tag, You're It the player who is it is a Hunter, whatever their skin, and
+no one else is: a human who chose the Hunter plays the Master Chief
+(infection.c).
 */
 
 #include "cseries.h"
@@ -57,6 +61,7 @@ What a skin's body cannot do (it is a campaign character's):
 #include "scenario/scenario.h"
 #include "game/game_globals.h"
 
+#include "infection.h"
 #include "network_coop.h"
 #include "player_skins.h"
 
@@ -328,12 +333,17 @@ long player_skins_unit_definition(
 	long default_definition_index)
 {
 	short skin;
+	short body;
 	long biped;
 
 	if (!player_skins_apply() || !player_skins_globals.loaded)
 		return default_definition_index;
 	skin = player_skin_of(player_index);
-	biped = player_skins_globals.bipeds[player_skin_definitions[skin].body];
+	body = player_skin_definitions[skin].body;
+	/* (Tag's it is a Hunter, and no one else is) */
+	if (tag_enabled())
+		body = tag_player_is_it(player_index) ? _skin_body_hunter : body == _skin_body_hunter ? _skin_body_chief : body;
+	biped = player_skins_globals.bipeds[body];
 
 	return biped != NONE ? biped : default_definition_index;
 }

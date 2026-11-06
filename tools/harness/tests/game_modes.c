@@ -146,6 +146,11 @@ int main(int argc,char **argv)
   CHECK(game_modes_variant_mode(&variant,&options)==_game_mode_gun_game,"Gun Game, free for all");
   variant.universal_variant.teams=TRUE;
   CHECK(game_modes_variant_mode(&variant,&options)==_game_mode_none,"no Gun Game on teams");
+  options.mode=_game_mode_tag;
+  CHECK(game_modes_variant_mode(&variant,&options)==_game_mode_tag,"Tag on teams");
+  variant.universal_variant.teams=FALSE;
+  CHECK(game_modes_variant_mode(&variant,&options)==_game_mode_none,"no Tag without teams");
+  options.mode=_game_mode_gun_game;
   variant.universal_variant.teams=FALSE;variant.game_engine_index=game_engine_ctf;
   CHECK(game_modes_variant_mode(&variant,&options)==_game_mode_none,"Slayer's modes only");
   CHECK(game_modes_variant_mode(NULL,&options)==_game_mode_none&&game_modes_variant_mode(&variant,NULL)==_game_mode_none,
@@ -159,6 +164,13 @@ int main(int argc,char **argv)
   CHECK(infection_round_result(2,1,limit*10,0)==NONE,"no time limit");
   CHECK(infection_round_result(3,0,10,limit)==0,"every zombie gone: the humans");
   CHECK(infection_round_result(0,0,10,limit)==2,"everyone gone: no one");
+ } else CASE("tag_round_result") {
+  long limit=300*30;
+  CHECK(tag_round_result(4,0,limit)==NONE,"players left, time to go");
+  CHECK(tag_round_result(4,limit,limit)==0,"the time out: it loses");
+  CHECK(tag_round_result(1,10,limit)==NONE,"a player alone plays on");
+  CHECK(tag_round_result(3,limit*10,0)==NONE,"no time limit");
+  CHECK(tag_round_result(0,10,limit)==2,"everyone gone: no one");
  } else CASE("state_valid") {
   struct distributed_infection_state state=valid_state();
   CHECK(infection_state_valid(&state,3,5),"a state of the game, as new");
@@ -227,6 +239,7 @@ int main(int argc,char **argv)
   variant.game_engine_index=game_engine_ctf;options.mode=_game_mode_none;
   CHECK(!wcscmp(game_modes_kind_name(game_engine_ctf,game_modes_kind(&variant,&options),TRUE),L"HC CTF"),"HC CTF");
   CHECK(!wcscmp(game_modes_kind_name(game_engine_slayer,_game_mode_swat,TRUE),L"SWAT"),"SWAT");
+  CHECK(!wcscmp(game_modes_kind_name(game_engine_slayer,_game_mode_tag|0x80,TRUE),L"HC TAG"),"HC TAG");
  } else CASE("kind_untrusted") {
   CHECK(game_modes_kind_name(game_engine_ctf,_game_mode_swat,TRUE)==NULL,"a mode of CTF is none");
   CHECK(!wcscmp(game_modes_kind_name(game_engine_oddball,_game_mode_infection|0x80,TRUE),L"HC ODDBALL"),

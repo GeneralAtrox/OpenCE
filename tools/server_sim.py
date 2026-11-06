@@ -195,6 +195,7 @@ BUILTINS = {
     "swat": ("slayer", True, "SWAT"), "infection": ("slayer", True, "Infection"), "gun_game": ("slayer", False, "Gun Game"),
     "hardcore": ("slayer", True, "Hardcore"), "hardcore_ctf": ("ctf", True, "HC CTF"),
     "hardcore_oddball": ("oddball", True, "HC Oddball"), "hardcore_king": ("king", True, "HC King"),
+    "tag": ("slayer", True, "Tag"),
 }
 GAMETYPE_ALIASES = {"ffa": "slayer", "ffa_slayer": "slayer", "teamslayer": "team_slayer", "tslayer": "team_slayer",
                     "koth": "king", "team_koth": "team_king", "iron_ctf": "ironctf", "teamrace": "team_race",

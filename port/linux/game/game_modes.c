@@ -1,7 +1,7 @@
 /*
 GAME_MODES.C
 
-OpenCE's gametypes: SWAT, Infection and Gun Game, modes of Slayer, and
+OpenCE's gametypes: SWAT, Infection, Gun Game and Tag, modes of Slayer, and
 Hardcore, rules over any game engine's. Which a gametype plays is in its PC
 options (game_engine.h's struct game_variant_options, from mode on), which a
 saved gametype keeps (playlist_profile.c), the network game carries to every
@@ -14,6 +14,10 @@ machine (network_game_manager.h) and the game plays by
 - Infection (infection.c): on teams. Humans are red, zombies blue; the host
   chooses the first zombies after a countdown, a human killed joins them, and
   the zombies win when no human is left, the humans when the time runs out.
+- Tag, You're It (infection.c's, with Infection's roles): on teams. One
+  player is it (a Hunter: player_skins.c) and the rest are humans; it
+  passes on to the human it kills, and whoever is it when the time runs out
+  loses.
 - Gun Game (gun_game.c): free for all. Each kill gives the killer the next
   weapon of a list; a kill with the last wins.
 - Hardcore: no motion sensor, no aim assist, and a kill restores the
@@ -66,6 +70,7 @@ enum
 	_gametype_hardcore_ctf,
 	_gametype_hardcore_oddball,
 	_gametype_hardcore_king,
+	_gametype_tag,
 	NUMBER_OF_GAMETYPES
 };
 
@@ -87,6 +92,7 @@ static struct
 	{ "hardcore_ctf", L"Hardcore CTF", L"HC CTF" },
 	{ "hardcore_oddball", L"Hardcore Oddball", L"HC Oddball" },
 	{ "hardcore_king", L"Hardcore King", L"HC King" },
+	{ "tag", L"Tag, You're It", L"Tag" },
 };
 
 /* the kill being recorded is a melee's (game_modes_kill_by_melee) */
@@ -173,6 +179,14 @@ void game_modes_gametype(
 		variant->universal_variant.respawn_time = 90;
 		variant->universal_variant.suicide_penalty = 0;
 		options->no_map_weapons = TRUE;
+		break;
+	case _gametype_tag:
+		options->mode = _game_mode_tag;
+		variant->universal_variant.vehicle_set = VEHICLE_SET_NONE;
+		variant->universal_variant.respawn_time = INFECTION_DEFAULT_RESPAWN_TIME * TICKS_PER_SECOND;
+		variant->universal_variant.suicide_penalty = 0;
+		options->time_limit = 5;
+		options->friendly_fire = _friendly_fire_off;
 		break;
 	default:
 		options->hardcore = TRUE;
@@ -276,6 +290,8 @@ short game_modes_variant_mode(
 		return variant->universal_variant.teams ? _game_mode_infection : _game_mode_none;
 	case _game_mode_gun_game:
 		return !variant->universal_variant.teams ? _game_mode_gun_game : _game_mode_none;
+	case _game_mode_tag:
+		return variant->universal_variant.teams ? _game_mode_tag : _game_mode_none;
 	}
 	return _game_mode_none;
 }
@@ -300,6 +316,7 @@ wchar_t const *game_modes_kind_name(
 		{ { L"SWAT", L"SWAT" }, { L"HARDCORE SWAT", L"HC SWAT" } },
 		{ { L"INFECTION", L"INFECTION" }, { L"HARDCORE INFECTION", L"HC INFECTION" } },
 		{ { L"GUN GAME", L"GUN GAME" }, { L"HARDCORE GUN GAME", L"HC GUN GAME" } },
+		{ { L"TAG", L"TAG" }, { L"HARDCORE TAG", L"HC TAG" } },
 	};
 	static wchar_t const *const hardcore_names[][2] =
 	{
@@ -362,6 +379,7 @@ struct game_engine *game_modes_engine(
 		SET_FLAG(game_engine_get_variant()->universal_variant.flags, _game_variant_no_shields_bit, TRUE);
 		break;
 	case _game_mode_infection:
+	case _game_mode_tag:
 		return infection_engine_get(engine);
 	case _game_mode_gun_game:
 		return gun_game_engine_get(engine);
@@ -375,6 +393,7 @@ void game_modes_postspawn(
 	switch (game_modes_mode())
 	{
 	case _game_mode_infection:
+	case _game_mode_tag:
 		infection_postspawn(player_index);
 		break;
 	case _game_mode_gun_game:

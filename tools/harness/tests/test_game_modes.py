@@ -34,7 +34,7 @@ def generated(fault=None):
         function(modes, 'game_modes_options_sanitize'), function(modes, 'game_modes_player_killed'),
         function(modes, 'game_modes_variant_mode'), '#define GAME_MODES_KIND_HARDCORE 0x80',
         function(modes, 'game_modes_kind'), function(modes, 'game_modes_kind_name'),
-        function(infection, 'infection_round_result'),
+        function(infection, 'infection_round_result'), function(infection, 'tag_round_result'),
         function(infection, 'infection_state_valid'), order,
         '#define GUN_GAME_MAXIMUM_LEVELS NUMBEROF(gun_game_strongest_first)',
         function(gun_game, 'gun_game_levels_build')])
@@ -44,7 +44,7 @@ def generated(fault=None):
 
 
 CASES = ['options_default', 'hardcore_restore', 'hardcore_no_restore', 'sanitize_defaults', 'sanitize_range',
-         'sanitize_keeps', 'variant_mode', 'round_result', 'state_valid', 'gun_game_order', 'gun_game_missing',
+         'sanitize_keeps', 'variant_mode', 'round_result', 'tag_round_result', 'state_valid', 'gun_game_order', 'gun_game_missing',
          'gun_game_random', 'kind', 'kind_untrusted']
 
 
@@ -61,6 +61,7 @@ def test_case(case):
     (('return variant->universal_variant.teams ? _game_mode_infection', 'return 1 ? _game_mode_infection'),
      'variant_mode'),
     (('if (!humans)\n\t\treturn 1;', 'if (!humans)\n\t\treturn NONE;'), 'round_result'),
+    (('if (limit > 0 && elapsed >= limit)\n\t\treturn 0;', ''), 'tag_round_result'),
     (('state->revision < revision ||', ''), 'state_valid'),
     (('player->reserved[0] || player->reserved[1] || player->reserved[2]', 'player->reserved[0]'), 'state_valid'),
     (('if (game_engine_loadout_weapon_definition(weapon) != NONE)', 'if (TRUE)'), 'gun_game_missing'),

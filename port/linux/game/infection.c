@@ -40,6 +40,7 @@ request #420 by arisson2001rojas-design.
 #include "game_modes.h"
 #include "infection.h"
 #include "network_infection.h"
+#include "player_skins.h"
 
 void platform_log(char const *format, ...);
 
@@ -71,7 +72,20 @@ static struct
 boolean infection_enabled(
 	void)
 {
-	return game_modes_mode() == _game_mode_infection;
+	short mode = game_modes_mode();
+
+	return mode == _game_mode_infection || mode == _game_mode_tag;
+}
+
+/* Tag, You're It: Infection's round and roles, with one zombie, it, who
+has no skull, no speed and no shields of a zombie's but a Hunter's body
+(player_skins.c); killing a human makes the human it and it a human again,
+and the time running out makes whoever is it lose. A player joins as a
+human, and a human killed by anyone else, or by themselves, stays one. */
+boolean tag_enabled(
+	void)
+{
+	return game_modes_mode() == _game_mode_tag;
 }
 
 /* a player's identity on every machine: their name and place in the game */
@@ -129,6 +143,17 @@ boolean infection_unit_is_zombie(
 	if (unit_index == NONE || !infection_enabled() || (unit = unit_try_and_get(unit_index)) == NULL)
 		return FALSE;
 	role = infection_player(unit->unit.player_index);
+	return role && role->role == _distributed_infection_role_zombie;
+}
+
+boolean tag_player_is_it(
+	long player_index)
+{
+	struct distributed_infection_player *role;
+
+	if (player_index == NONE || !tag_enabled())
+		return FALSE;
+	role = infection_player(player_index);
 	return role && role->role == _distributed_infection_role_zombie;
 }
 
@@ -343,11 +368,11 @@ void infection_reconcile_player(
 	team = role->role == _distributed_infection_role_zombie ? 1 : 0;
 	player->team_index = team;
 	player->network_player_data.team_index = (char)team;
-	player->speed_multiplier = team ? options->infection_zombie_speed / 100.0f : 1.0f;
+	player->speed_multiplier = team && !tag_enabled() ? options->infection_zombie_speed / 100.0f : 1.0f;
 	if (player->unit_index != NONE && (unit = unit_try_and_get(player->unit_index)) != NULL)
 	{
 		infection_apply_shields(DATUM_INDEX_TO_ABSOLUTE_INDEX(player_index), player->unit_index, unit,
-			team && !options->infection_zombie_shields);
+			team && !tag_enabled() && !options->infection_zombie_shields);
 		unit->object.owner_team_index = (short)team;
 		infection_color_unit(unit, player_index);
 		/* (a living zombie's grenades and powerups gone; a dead one's are its
@@ -457,13 +482,20 @@ static void infection_equip(
 	short inventory_slot;
 
 	if (network_game_distributed_client() || !role || player->quit_out_of_game || player->unit_index == NONE ||
-		infection.missing_skull)
+		(infection.missing_skull && !tag_enabled()))
 	{
 		return;
 	}
 	unit = unit_get(player->unit_index);
 	if (TEST_FLAG(unit->object.damage_flags, _object_dead_bit))
 		return;
+	/* (Tag's players keep what they spawned with: it, a Hunter's cannon) */
+	if (tag_enabled())
+	{
+		infection.equipped_unit[slot] = player->unit_index;
+		infection.killed_unit[slot] = NONE;
+		return;
+	}
 	if (infection.equipped_unit[slot] == player->unit_index)
 	{
 		if (role->role == _distributed_infection_role_human)
@@ -541,7 +573,8 @@ static void infection_player_added(
 		infection_delete_skull(slot);
 		csmemset(role, 0, sizeof(*role));
 		role->identity = infection_player_identity(player_index);
-		role->role = infection.state.phase >= _distributed_infection_active ? _distributed_infection_role_zombie :
+		role->role = infection.state.phase >= _distributed_infection_active && !tag_enabled() ?
+			_distributed_infection_role_zombie :
 			_distributed_infection_role_human;
 		infection.participant[slot] = player_index;
 		infection.equipped_unit[slot] = NONE;
@@ -565,6 +598,33 @@ void infection_postspawn(
 	infection_equip(player_index);
 }
 
+/* Tag's body is its role's from a spawn: a living player whose role
+changed, in another role's body, dies with no death counted (as a player
+who quits: game.c) and spawns again at once */
+static void tag_respawn_in_role(
+	long player_index)
+{
+	struct player_datum *player = player_get(player_index);
+	struct unit_datum *unit;
+	long definition_index;
+
+	if (player->quit_out_of_game || player->unit_index == NONE ||
+		(unit = unit_try_and_get(player->unit_index)) == NULL || TEST_FLAG(unit->object.damage_flags, _object_dead_bit))
+	{
+		return;
+	}
+	/* (NONE: the map's own unit) */
+	definition_index = player_skins_unit_definition(player_index, NONE);
+	if (definition_index == NONE ? !player_skins_unit_is_body(player->unit_index) :
+		definition_index == unit->definition_index)
+	{
+		return;
+	}
+	unit_kill_no_statistics(player->unit_index);
+	platform_log("tag: player %ld spawns again as %s", DATUM_INDEX_TO_ABSOLUTE_INDEX(player_index),
+		tag_player_is_it(player_index) ? "it" : "a human");
+}
+
 static void infection_player_killed_player(
 	long killing_player_index,
 	long killing_object_index,
@@ -584,6 +644,27 @@ static void infection_player_killed_player(
 		return;
 	}
 	infection.killed_unit[slot] = unit_index == NONE ? 0 : unit_index;
+	/* Tag: a human killed by it is it, and it a human again (each in their
+	role's body: tag_respawn_in_role); any other death changes no one */
+	if (tag_enabled())
+	{
+		if (killer && killer != dead && killer->role != dead->role && killer->score < INFECTION_MAXIMUM_SCORE)
+			killer->score++;
+		if (killer && killer != dead && killer->role == _distributed_infection_role_zombie &&
+			dead->role == _distributed_infection_role_human)
+		{
+			killer->role = _distributed_infection_role_human;
+			dead->role = _distributed_infection_role_zombie;
+			infection_reconcile_player(killing_player_index);
+			tag_respawn_in_role(killing_player_index);
+			platform_log("tag: player %ld tagged player %ld, who is it", DATUM_INDEX_TO_ABSOLUTE_INDEX(killing_player_index),
+				slot);
+		}
+		infection_reconcile_player(dead_player_index);
+		infection.equipped_unit[slot] = NONE;
+		infection.state.revision++;
+		return;
+	}
 	if (killer && killer != dead && killer->role != dead->role && killer->score < INFECTION_MAXIMUM_SCORE)
 		killer->score++;
 	/* (a human killed by a zombie, themselves or the world turns; one killed
@@ -619,6 +700,20 @@ static long infection_round_result(
 	return NONE;
 }
 
+/* Tag's: 0 the humans won (it lost, as the time ran out), 2 no one
+(everyone left), NONE still on; a round without a time limit goes on */
+static long tag_round_result(
+	long players,
+	long elapsed,
+	long limit)
+{
+	if (!players)
+		return 2;
+	if (limit > 0 && elapsed >= limit)
+		return 0;
+	return NONE;
+}
+
 static long infection_time_limit_ticks(
 	void)
 {
@@ -637,6 +732,7 @@ static void infection_update(
 	long zombies = 0;
 	long count = 0;
 	long index;
+	long first;
 	long now = game_time_get();
 
 	if (infection.slayer.update)
@@ -678,7 +774,7 @@ static void infection_update(
 			infection.state.revision++;
 		}
 	}
-	if (infection.missing_skull)
+	if (infection.missing_skull && !tag_enabled())
 	{
 		platform_log("infection: no skull to give (the map has no Oddball ball), the round ends");
 		infection_finish(NONE);
@@ -686,13 +782,30 @@ static void infection_update(
 	}
 	if (infection.state.phase == _distributed_infection_active)
 	{
-		long result = infection_round_result(humans, zombies, now - infection.state.phase_tick,
-			infection_time_limit_ticks());
+		long result = tag_enabled() ?
+			tag_round_result(humans + zombies, now - infection.state.phase_tick, infection_time_limit_ticks()) :
+			infection_round_result(humans, zombies, now - infection.state.phase_tick, infection_time_limit_ticks());
 
 		if (result != NONE)
 		{
 			platform_log("infection: result %ld, %ld humans, %ld zombies", result, humans, zombies);
+			for (index = 0; tag_enabled() && index < HALO_PORT_MAXIMUM_NETWORK_PLAYERS; index++)
+			{
+				if (infection.state.players[index].role == _distributed_infection_role_zombie)
+					platform_log("tag: the time is up: player %ld is it, and loses", index);
+			}
 			infection_finish(result == 2 ? NONE : result);
+		}
+		/* (Tag's it left: another is chosen of the living, leaving a human) */
+		else if (tag_enabled() && !zombies && count > 0 && humans > 1)
+		{
+			long chosen = candidates[local_random_range(0, (short)count)];
+
+			infection.state.players[DATUM_INDEX_TO_ABSOLUTE_INDEX(chosen)].role = _distributed_infection_role_zombie;
+			infection.state.revision++;
+			infection_reconcile_player(chosen);
+			tag_respawn_in_role(chosen);
+			platform_log("tag: no one was it: player %ld is", DATUM_INDEX_TO_ABSOLUTE_INDEX(chosen));
 		}
 		return;
 	}
@@ -715,8 +828,10 @@ static void infection_update(
 		return;
 	infection.state.phase = _distributed_infection_active;
 	infection.state.phase_tick = now;
-	/* the first zombies, drawn without repeats, leaving a human */
-	for (index = 0; index < MIN(count - 1, options->infection_initial_zombies); index++)
+	/* the first zombies, drawn without repeats, leaving a human (Tag's
+	one, it) */
+	first = MIN(count - 1, tag_enabled() ? 1L : (long)options->infection_initial_zombies);
+	for (index = 0; index < first; index++)
 	{
 		long pick = index + local_random_range(0, (short)(count - index));
 		long chosen = candidates[pick];
@@ -728,10 +843,14 @@ static void infection_update(
 		infection.equipped_unit[slot] = NONE;
 		infection_reconcile_player(chosen);
 		infection_equip(chosen);
+		if (tag_enabled())
+		{
+			platform_log("tag: player %ld is it", slot);
+			tag_respawn_in_role(chosen);
+		}
 	}
 	infection.state.revision++;
-	platform_log("infection: active, %ld players, %ld zombies", count,
-		MIN(count - 1, (long)options->infection_initial_zombies));
+	platform_log("infection: active, %ld players, %ld zombies", count, first);
 }
 
 long infection_remaining_ticks(
@@ -756,7 +875,7 @@ static boolean infection_initialize_for_new_map(
 	csmemset(infection.shield_unit, 0xFF, sizeof(infection.shield_unit));
 	infection.state.winner = NONE;
 	infection.state.game_number = network_game_get_game() ? network_game_get_number_of_games_played() : 0;
-	infection.missing_skull = get_ball_definition_index() == NONE;
+	infection.missing_skull = !tag_enabled() && get_ball_definition_index() == NONE;
 	infection.equipping = FALSE;
 	/* (everyone respawns; the variant's traits give zombies no infinite
 	grenades nor camouflage) */
@@ -775,7 +894,7 @@ static boolean infection_allow_pick_up(
 {
 	short slot;
 
-	if (infection.equipping)
+	if (infection.equipping || tag_enabled())
 		return TRUE;
 	if (infection_weapon_is_skull(weapon_index))
 	{

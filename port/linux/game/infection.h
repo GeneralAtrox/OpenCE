@@ -7,6 +7,11 @@ union real_vector3d;
 
 /* the game being played is Infection (game_modes_mode's) */
 boolean infection_enabled(void);
+/* the game being played is Tag, You're It: Infection's roles, with one
+zombie, who is it */
+boolean tag_enabled(void);
+/* the player is it (a Hunter: player_skins.c) */
+boolean tag_player_is_it(long player_index);
 /* Slayer's engine with Infection's rules (game_modes_engine) */
 struct game_engine *infection_engine_get(struct game_engine const *slayer);
 /* a player spawned: a zombie's skull (game_modes_postspawn) */
