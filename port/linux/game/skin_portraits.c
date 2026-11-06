@@ -212,6 +212,8 @@ static void skin_portrait_render(
 	memset(&render.fog, 0, sizeof(render.fog));
 
 	change_colors[0] = portrait->color;
+	/* (the others as a placed object's: white, or its first permutation's
+	middle; objects.c's object_choose_random_change_colors) */
 	for (index = 1; index < 4; index++)
 	{
 		change_colors[index].red = change_colors[index].green = change_colors[index].blue = 1.f;
@@ -220,9 +222,17 @@ static void skin_portrait_render(
 			struct object_change_color_definition const *change =
 				TAG_BLOCK_GET_ELEMENT(&definition->object.change_colors, index, struct object_change_color_definition);
 
-			change_colors[index] = change->permutations.count > 0 ?
-				TAG_BLOCK_GET_ELEMENT(&change->permutations, 0, struct object_change_color_permutation)->color_lower_bound :
-				change->color_lower_bound;
+			if (change->permutations.count > 0)
+			{
+				struct object_change_color_permutation const *permutation =
+					TAG_BLOCK_GET_ELEMENT(&change->permutations, 0, struct object_change_color_permutation);
+
+				change_colors[index].red = (permutation->color_lower_bound.red + permutation->color_upper_bound.red) * 0.5f;
+				change_colors[index].green =
+					(permutation->color_lower_bound.green + permutation->color_upper_bound.green) * 0.5f;
+				change_colors[index].blue =
+					(permutation->color_lower_bound.blue + permutation->color_upper_bound.blue) * 0.5f;
+			}
 		}
 	}
 	memset(function_values, 0, sizeof(function_values));
