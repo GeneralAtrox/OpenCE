@@ -491,9 +491,6 @@ static void render_window(
 				short view_height = rasterizer_camera->viewport_bounds.y1 - rasterizer_camera->viewport_bounds.y0;
 				real menu_scale = ui_scale < 1.0f ? 1.0f : ui_widget_port_view_scale(local_player_index, view_height);
 
-				{ static long pausedebug_count; extern void platform_log(char const *, ...);
-				if ((pausedebug_count++ % 300) == 0) platform_log("PAUSEDEBUG: render player %d view %d %d %d %d ui_scale %f menu_scale %f",
-					local_player_index, rasterizer_camera->viewport_bounds.x0, rasterizer_camera->viewport_bounds.y0, view_width, view_height, ui_scale, menu_scale); }
 				if (menu_scale < 1.0f)
 				{
 					/* (the view's bounds enlarged about its corner, as for

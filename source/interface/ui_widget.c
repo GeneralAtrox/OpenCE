@@ -7538,10 +7538,6 @@ real ui_widget_port_view_scale(
 		height = (short)(definition->bounds.y1 + widget->vertical_offset);
 		if (ui_widget_port_extent(widget->child, widget->vertical_offset, 1) > height)
 			height = ui_widget_port_extent(widget->child, widget->vertical_offset, 1);
-		{ static long pausedebug_count; extern void platform_log(char const *, ...);
-		if ((pausedebug_count++ % 200) == 0) platform_log("PAUSEDEBUG: player %d widget %ld %s bounds %d %d %d %d voff %d extent %d view %d",
-			local_player_index, widget_index, widget->name ? widget->name : "?", definition->bounds.x0, definition->bounds.y0, definition->bounds.x1, definition->bounds.y1,
-			widget->vertical_offset, height, view_height); }
 		if (height > view_height && (real)view_height / height < scale)
 			scale = (real)view_height / height;
 	}
