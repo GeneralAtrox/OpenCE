@@ -99,7 +99,7 @@ enum
 
 	/* (2: Master Chief's biped, for the menus' map; 3: each bitmap's pixels
 	as many as the texture cache reads) */
-	SKIN_PACK_VERSION = 3,
+	SKIN_PACK_VERSION = 4,
 
 	REMAP_UNSEEN = -2,
 	REMAP_PENDING = -3,
@@ -692,6 +692,18 @@ static void import_bitmap_ranges(
 
 		import_range_add(import, group->pixel_data.file_offset + bitmap->pixels_offset,
 			MAX(size, bitmap->pixels_size));
+		{
+			static long logs = 0;
+
+			if (logs < 12)
+			{
+				logs++;
+				platform_log("player skins: (debug) donor bitmap pixels %08lx size %ld, its data %08lx+%lx flags %lx",
+					(unsigned long)bitmap->pixels_offset, (long)bitmap->pixels_size,
+					(unsigned long)group->pixel_data.file_offset, (unsigned long)group->pixel_data.size,
+					(unsigned long)group->pixel_data.flags);
+			}
+		}
 	}
 
 	return;
@@ -1822,9 +1834,10 @@ boolean skin_tags_read(
 				above = range->offset;
 		}
 		platform_log("player skins: tag %ld's %ld bytes at %08lx: %lu of them not in the skins' cache file (zeros); "
-			"its pixels %08lx+%lx, %ld bitmaps; ranges end %08lx before, start %08lx after",
+			"its pixels %08lx+%lx, %ld bitmaps (the first's at %08lx); ranges end %08lx before, start %08lx after",
 			absolute_index, size, (unsigned long)offset, (unsigned long)size - covered,
 			(unsigned long)group->pixel_data.file_offset, (unsigned long)group->pixel_data.size, (long)group->bitmaps.count,
+			group->bitmaps.count > 0 ? (unsigned long)((struct bitmap_data *)group->bitmaps.address)->pixels_offset : 0UL,
 			below, above);
 	}
 
