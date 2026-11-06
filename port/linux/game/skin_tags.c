@@ -1809,8 +1809,23 @@ boolean skin_tags_read(
 	if (covered < (unsigned long)size && uncovered_logs < 40)
 	{
 		uncovered_logs++;
-		platform_log("player skins: tag %ld's %ld bytes at %08lx: %lu of them not in the skins' cache file (zeros)",
-			absolute_index, size, (unsigned long)offset, (unsigned long)size - covered);
+		struct bitmap_group const *group = bitmap_group_get(tag_index);
+		unsigned long below = 0, above = 0xFFFFFFFFUL;
+
+		for (index = 0; index < skin_tags_globals.range_count; index++)
+		{
+			struct skin_range const *range = &skin_tags_globals.ranges[index];
+
+			if (range->offset <= (unsigned long)offset && range->offset + range->size > below)
+				below = range->offset + range->size;
+			if (range->offset > (unsigned long)offset && range->offset < above)
+				above = range->offset;
+		}
+		platform_log("player skins: tag %ld's %ld bytes at %08lx: %lu of them not in the skins' cache file (zeros); "
+			"its pixels %08lx+%lx, %ld bitmaps; ranges end %08lx before, start %08lx after",
+			absolute_index, size, (unsigned long)offset, (unsigned long)size - covered,
+			(unsigned long)group->pixel_data.file_offset, (unsigned long)group->pixel_data.size, (long)group->bitmaps.count,
+			below, above);
 	}
 
 	return TRUE;
