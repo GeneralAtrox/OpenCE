@@ -20,7 +20,7 @@ The work is on the `split16` branch.
 - **Choose a skin while joining.** On the ADD PLAYER screen, X changes a joining player's skin and Y makes a new profile. A controller with no free profile gets one made for it. Profiles another player holds, and the game's unusable defaults, are hidden.
 - **A pause menu that fits.** In co-op split screen, each player's pause menu is drawn whole inside their own view.
 
-The skin bodies are copied at load time from your own Two Betrayals map (`c40.map`). A stock multiplayer map has them all. A co-op campaign level gets the ones it lacks when its memory has room, so on some levels a Hunter or Elite plays as Master Chief. Custom Edition maps always play Master Chief.
+The skin bodies are copied at load time from your own Two Betrayals map (`c40.map`). A stock multiplayer map has them all. A co-op campaign level gets the ones it lacks, in memory of their own below the level's tag cache, so every body plays on every level. Custom Edition maps always play Master Chief.
 
 Details and settings (`multiplayer.skin_1` to `skin_16`) are in [port/linux/README.md](port/linux/README.md).
 

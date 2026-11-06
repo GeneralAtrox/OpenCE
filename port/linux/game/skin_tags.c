@@ -12,7 +12,11 @@ map's own, with every tag they need that the map has not got (a tag of the
 same group and name as one of the map's is the map's), and the map's tag
 table is copied after them with theirs added. The map's tag data then ends
 after them, below its structure bsps, so a bsp's load does not clear them,
-and tag_validate_tags checks them with the map's.
+and tag_validate_tags checks them with the map's. A map whose tag cache has
+no room for them (a campaign level: a10 has 342 KB, the bodies take 2.6 MB)
+has them below its tag cache instead, where the Xbox's game state was
+(SKIN_TAGS_BASE_ADDRESS, physical_memory_map.h): with its tags one run of
+memory, which tag_validate_tags checks as the tags' (tag_validate_set_below).
 
 Their pointers are moved to where they are now by the tags' schemas
 (tag_schema.h), which name every block, data, reference and tag index of a
@@ -120,9 +124,11 @@ static char const *const skin_root_bipeds[] =
 };
 #define SKIN_ROOTS_ALL ((1UL << (NUMBEROF(skin_root_bipeds) - 1)) - 1)
 
-/* the bodies left out first when a map's tag cache has no room for all of
-them (a campaign level's, in co-op): the stealth Elite, the Flood, the Elite;
-the Hunter last. Every machine leaves out the same: the room is the map's */
+/* the bodies left out first when there is no room for all of them, in a
+map's tag cache or below it (no stock map: a map with none of them takes
+3.9 MB and below it are 3.3 MB, but every campaign level has some): the
+stealth Elite, the Flood, the Elite; the Hunter last. Every machine leaves
+out the same: the room is the map's */
 static short const skin_drop_order[] = { 1, 2, 3, 0, 4 };
 
 /* rasterizer_geometry.c's rasterizer_vertex_type_sizes */

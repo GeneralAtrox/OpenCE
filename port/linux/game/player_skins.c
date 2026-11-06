@@ -12,8 +12,8 @@ machine says if it is one of player_skin, else the Master Chief.
 
 A player's body is its skin's biped where the map has it, else the map's
 own. A stock multiplayer map has the skins' bipeds from Two Betrayals' tags
-(skin_tags.c), and so does a campaign level in co-op, besides its own (when
-its tag cache has room for them); a Custom Edition map has none.
+(skin_tags.c), and so does a campaign level in co-op, besides its own; a
+Custom Edition map has none.
 
 What a skin's body cannot do (it is a campaign character's):
 - the first-person arms are the Master Chief's, always (the globals');
