@@ -134,8 +134,9 @@ static void skin_portrait_render(
 	real tangent;
 	real distance;
 	real half_height;
-	/* seen from the front and a little to its left */
-	real yaw = 0.45f;
+	/* seen from the front and a little to its left (an idle stands turned
+	to its right, its weapon side) */
+	real yaw = -1.1f;
 	short node_count = model->nodes.count;
 	short index;
 
@@ -244,6 +245,12 @@ static void skin_portrait_render(
 	lighting.distant_lights[1].direction.j = (real)sin(yaw - 0.8f);
 	lighting.distant_lights[1].direction.k = 0.2f;
 	normalize3d(&lighting.distant_lights[1].direction);
+	/* (a shiny surface is drawn toward its reflection, tinted by this: none
+	is black) */
+	lighting.reflection_tint_color.alpha = 0.75f;
+	lighting.reflection_tint_color.red = 0.9f;
+	lighting.reflection_tint_color.green = 0.9f;
+	lighting.reflection_tint_color.blue = 0.9f;
 	lighting.shadow_vector.k = -1.f;
 
 	rasterizer_models_begin(TRUE);
