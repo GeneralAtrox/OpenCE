@@ -88,6 +88,10 @@ symbols in this file:
 #include "units/units.h"
 #include "network_chat.h" /* port: port/linux/game/network_chat.c */
 
+/* port: a skin's body's HUD (port/linux/game/player_skins.c) */
+extern long player_skins_unit_hud(long unit_index, boolean multiplayer, long hud_index);
+extern boolean player_skins_unit_shows_shield(long unit_index);
+
 /* ---------- constants */
 
 enum
@@ -434,9 +438,14 @@ void hud_play_unit_sounds(
 		{
 			struct unit_definition const *unit_definition =
 				unit_definition_get(unit->definition_index);
-			long active_hud_index = unit_definition_get_active_hud_index(
-				unit_definition,
-				local_player_count() > 1);
+			/* port: a skin's body with no HUD of its own shows the Master
+			Chief's (port/linux/game/player_skins.c) */
+			long active_hud_index = player_skins_unit_hud(
+				unit_index,
+				local_player_count() > 1,
+				unit_definition_get_active_hud_index(
+					unit_definition,
+					local_player_count() > 1));
 
 			if (active_hud_index == NONE)
 				return;
@@ -453,7 +462,9 @@ void hud_play_unit_sounds(
 				}
 				else if (show_hud && !cinematic_in_progress())
 				{
+					/* port: and not for a player's Hunter, which has no shield */
 					if (hud_state->last_shield_vitality != -1.0f &&
+						player_skins_unit_shows_shield(unit_index) &&
 						game_engine_has_shield(local_player_get_player_index(
 							player->local_player_index)))
 					{
@@ -822,11 +833,16 @@ void hud_render_unit_interface(
 		long player_index = local_player_get_player_index(local_player_index);
 		struct unit_hud_state *hud_state = get_hud_state(local_player_index);
 		long unit_indices[18] = { player->unit_index };
+		/* port: a skin's body with no HUD of its own shows the Master Chief's
+		(port/linux/game/player_skins.c) */
 		long unit_hud_indices[18] =
 		{
-			unit_definition_get_active_hud_index(
-				unit_definition,
-				local_player_count() > 1)
+			player_skins_unit_hud(
+				player->unit_index,
+				local_player_count() > 1,
+				unit_definition_get_active_hud_index(
+					unit_definition,
+					local_player_count() > 1))
 		};
 		long unit_count = 1;
 		unsigned long auxilary_flags;
@@ -929,7 +945,9 @@ void hud_render_unit_interface(
 						NONE);
 				}
 
+				/* port: no shield meter for a player's Hunter, which has no shield */
 				if (game_engine_has_shield(player_index) &&
+					player_skins_unit_shows_shield(player->unit_index) &&
 					!TEST_FLAG(
 						unit_hud_globals->script_flags,
 						_hud_panel_shield_dont_show_bit))

@@ -189,6 +189,16 @@ void following_camera_deterministic(
 	return;
 }
 
+/* port: how far behind the player the view is on foot, as a part of the
+camera track's (display.third_person_distance, port/linux/src/port_config.c) */
+static real following_camera_port_distance(void)
+{
+	extern double config_real(const char *name);
+	double distance = config_real("display.third_person_distance");
+
+	return (real)(distance < 0.2 ? 0.2 : distance > 2.0 ? 2.0 : distance);
+}
+
 void following_camera_update(
 	struct following_camera *camera,
 	struct following_camera_control const *controls,
@@ -225,8 +235,12 @@ void following_camera_update(
 		boolean crouched;
 		real_euler_angles2d facing;
 		real_vector3d track_offset;
+		real distance_scale = camera->distance_scale;
 
 		unit = unit_get(camera_info.unit_index);
+		/* port: display.third_person_distance, on foot */
+		if (camera_info.seat_index == NONE && !passenger)
+			distance_scale *= following_camera_port_distance();
 		crouched =
 			TEST_FLAG(unit->unit.control_flags, _unit_control_crouch_modifier_bit) ||
 			TEST_FLAG(unit->unit.control_flags, _unit_control_jump_bit);
@@ -271,12 +285,12 @@ void following_camera_update(
 		camera_track_splut(camera_info.camera, facing.pitch, &track_offset);
 		command->depth = magnitude3d(&track_offset);
 		command->offset.i =
-			(command->depth * cosine(facing.pitch) + track_offset.i) * camera->distance_scale;
-		command->offset.j = -track_offset.j * camera->distance_scale;
+			(command->depth * cosine(facing.pitch) + track_offset.i) * distance_scale;
+		command->offset.j = -track_offset.j * distance_scale;
 		command->offset.k =
-			(command->depth * sine(facing.pitch) + track_offset.k) * camera->distance_scale;
+			(command->depth * sine(facing.pitch) + track_offset.k) * distance_scale;
 		command->depth = MAX(
-			(command->depth - 0.6f) * camera->distance_scale + 0.6f,
+			(command->depth - 0.6f) * distance_scale + 0.6f,
 			0.6f);
 
 		object_get_velocities(camera_info.unit_index, &command->velocity, NULL);

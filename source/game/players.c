@@ -4803,6 +4803,12 @@ void player_add_equipment(
 				unit = (struct unit_datum *)((byte *)unit + 1);
 			}
 			while (--grenade_index);
+			/* port: a player's Hunter carries none (port/linux/game/player_skins.c) */
+			{
+				extern void player_skins_grenades_given(long unit_index);
+
+				player_skins_grenades_given(unit_index);
+			}
 		}
 	}
 

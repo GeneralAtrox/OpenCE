@@ -1487,6 +1487,22 @@ static void get_local_player_input_blob(
 					input->unit_control_flags,
 					_unit_control_use_equipment_bit,
 					effective_buttons[_button_melee_attack]);
+				/* port: a player's Hunter throws no grenades: its grenade
+				control strikes instead, again and again while held (the
+				melee bit is what the action queue sends, so every machine
+				sees an ordinary blow; port/linux/game/player_skins.c) */
+				{
+					extern boolean player_skins_unit_melees_with_grenade(long unit_index);
+
+					if (player->unit_index != NONE &&
+						effective_buttons[_button_throw_grenade] &&
+						player_skins_unit_melees_with_grenade(player->unit_index))
+					{
+						SET_FLAG(input->unit_control_flags, _unit_control_use_equipment_bit, TRUE);
+						SET_FLAG(input->unit_control_flags, _unit_control_throw_grenade_bit, FALSE);
+						SET_FLAG(input->unit_control_flags, _unit_control_weapon_secondary_trigger_bit, FALSE);
+					}
+				}
 				SET_FLAG(
 					input->player_control_flags,
 					_player_control_rotate_weapons_bit,

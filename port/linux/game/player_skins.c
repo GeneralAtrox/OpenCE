@@ -32,7 +32,11 @@ What a skin's body cannot do (it is a campaign character's):
   only forward), and plays its move-front animation to the back and the
   sides, which it has none for; its cannon shows the plasma pistol's HUD
   and crosshair (it has none); in campaign co-op, where the level's
-  starting weapons are given instead, it keeps its own;
+  starting weapons are given instead, it keeps its own; where its body
+  has no HUD of its own (a level's own Hunter, a campaign character's) it
+  shows the Master Chief's, without the shield meter, as it has no shield;
+  it carries no grenades, and the grenade control (a controller's left
+  trigger) strikes instead, again and again while held (player_control.c);
 - the Flood and the Hunter cannot drive or ride a vehicle (their animations
   have no seats in one), nor the Flood throw a grenade;
 - a stealth Elite is not camouflaged (it is as any player is, with the
@@ -50,6 +54,8 @@ What a skin's body cannot do (it is a campaign character's):
 #include "items/weapons.h"
 #include "items/weapon_definitions.h"
 #include "tag_files/tag_groups.h"
+#include "scenario/scenario.h"
+#include "game/game_globals.h"
 
 #include "network_coop.h"
 #include "player_skins.h"
@@ -380,7 +386,10 @@ void player_skins_unit_spawned(
 	if (skin == _player_skin_chief && body == NONE)
 		return;
 	if (body != NONE)
+	{
 		skin_weapons_fill(unit_index);
+		player_skins_grenades_given(unit_index);
+	}
 	platform_log("player skins: player %ld (%s) is %s", DATUM_INDEX_TO_ABSOLUTE_INDEX(player_index),
 		player_skin_definitions[skin].word, body == NONE ? "the map's own unit" : skin_body_bipeds[body]);
 
@@ -546,6 +555,73 @@ void player_skins_unit_melee(
 		platform_log("player skins: %s has struck %ld blows", skin_body_bipeds[body],
 			player_skins_globals.melees[body]);
 	}
+
+	return;
+}
+
+/* the unit HUD a player's unit shows: its own, or for a skin's body with
+none (a level's own Hunter, a campaign character's) the player's stock
+unit's, the Master Chief's, chosen as players.c chooses the unit */
+long player_skins_unit_hud(
+	long unit_index,
+	boolean multiplayer,
+	long hud_index)
+{
+	struct game_globals *game_globals;
+	long definition_index = NONE;
+
+	if (hud_index != NONE || player_skin_body_of_unit(unit_index) == NONE)
+		return hud_index;
+	game_globals = scenario_get_game_globals();
+	if (game_globals == NULL)
+		return hud_index;
+	if (game_engine_running() && game_globals->multiplayer_information.count > 0)
+	{
+		definition_index = TAG_BLOCK_GET_ELEMENT(&game_globals->multiplayer_information, 0,
+			struct game_globals_multiplayer_information)->unit.index;
+	}
+	if (definition_index == NONE && game_globals->player_information.count > 0)
+	{
+		definition_index = TAG_BLOCK_GET_ELEMENT(&game_globals->player_information, 0,
+			struct game_globals_player_information)->player_unit.index;
+	}
+	if (definition_index == NONE)
+		return hud_index;
+
+	return unit_definition_get_active_hud_index(unit_definition_get(definition_index), multiplayer);
+}
+
+/* a player's Hunter has no shield, so its HUD shows no shield meter and
+plays no shield sounds */
+boolean player_skins_unit_shows_shield(
+	long unit_index)
+{
+	return player_skin_body_of_unit(unit_index) != _skin_body_hunter;
+}
+
+/* a player's Hunter throws no grenades: its grenade control strikes
+(player_control.c) */
+boolean player_skins_unit_melees_with_grenade(
+	long unit_index)
+{
+	return player_skin_body_of_unit(unit_index) == _skin_body_hunter;
+}
+
+/* a player's Hunter carries no grenades (a campaign level's starting
+profile, players.c's player_add_equipment, gives the player some), so the
+HUD shows none */
+void player_skins_grenades_given(
+	long unit_index)
+{
+	struct unit_datum *unit;
+	short index;
+
+	if (player_skin_body_of_unit(unit_index) != _skin_body_hunter)
+		return;
+	unit = unit_get(unit_index);
+	for (index = 0; index < NUMBER_OF_UNIT_GRENADE_TYPES; index++)
+		unit->unit.grenade_counts[index] = 0;
+	unit->unit.current_grenade_index = NONE;
 
 	return;
 }

@@ -234,6 +234,16 @@ static struct director_variable_definition variables[NUMBER_OF_DIRECTOR_VARIABLE
 
 static struct director_globals director_globals = {0};
 boolean director_camera_switch_fast = FALSE;
+/* port: display.camera_tap (port/linux/src/port_config.c): the camera
+switch (the black button, a controller's right bumper) switches with each
+press, between the first-person view and the one behind the player only,
+never the flying camera */
+extern int config_boolean(const char *name);
+static short const director_port_tap_camera_modes[2] =
+{
+	_camera_first_person,
+	_camera_following
+};
 static boolean hyper_key_down = FALSE;
 boolean *director_camera_scripted;
 
@@ -741,7 +751,18 @@ static void director_choose_camera_game(
 		camera would see all of it, and one behind the player round its
 		corners) */
 		if (key && !network_game_distributed_client())
-			director_rotate_cameras(local_player_index, director_game_camera_modes, 3);
+		{
+			/* port: with display.camera_tap, to the other of the first-person
+			view and the one behind the player, from the view shown now */
+			if (config_boolean("display.camera_tap"))
+			{
+				director->camera_mode_index =
+					director->camera_proc == (director_camera_update_proc)following_camera_update ? 1 : 0;
+				director_rotate_cameras(local_player_index, director_port_tap_camera_modes, 2);
+			}
+			else
+				director_rotate_cameras(local_player_index, director_game_camera_modes, 3);
+		}
 		if (!*director_camera_scripted)
 		{
 			director_choose_game_perspective(local_player_index, initialize);
@@ -857,7 +878,8 @@ static boolean director_update_controls(
 		struct gamepad_state const *gamepad =
 			input_get_gamepad_state((short)player_index);
 
-		if (director_camera_switch_fast)
+		/* port: or with display.camera_tap */
+		if (director_camera_switch_fast || config_boolean("display.camera_tap"))
 		{
 			switch_camera =
 				gamepad->buttons[_gamepad_analog_button_black] == 1;

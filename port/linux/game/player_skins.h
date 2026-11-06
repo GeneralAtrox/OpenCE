@@ -65,6 +65,15 @@ boolean player_skins_weapon_fire(long weapon_index, long unit_index);
 boolean player_skins_unit_is_body(long unit_index);
 /* a player's unit strikes a blow: counted and logged if a skin's body */
 void player_skins_unit_melee(long unit_index);
+/* the unit HUD a player's unit shows: hud_index, or the Master Chief's for a
+skin's body with none */
+long player_skins_unit_hud(long unit_index, boolean multiplayer, long hud_index);
+/* FALSE for a player's Hunter, which has no shield */
+boolean player_skins_unit_shows_shield(long unit_index);
+/* TRUE for a player's Hunter, whose grenade control strikes */
+boolean player_skins_unit_melees_with_grenade(long unit_index);
+/* a player's Hunter carries no grenades */
+void player_skins_grenades_given(long unit_index);
 /* the map's tags have loaded or are going */
 void player_skins_tags_loaded(void);
 void player_skins_tags_unloaded(void);

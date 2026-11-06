@@ -170,6 +170,13 @@ static const struct config_setting config_settings[] =
 	{ "display.viewmodel_visible", _config_boolean, "true", "HALO_VIEWMODEL_VISIBLE", _environment_value, _platform_all,
 		"Draw the first-person weapon, hands and what is attached to them.\n"
 		"Off, they are not drawn; firing, animation, sound and lights go on." },
+	{ "display.camera_tap", _config_boolean, "true", "HALO_CAMERA_TAP", _environment_value, _platform_all,
+		"The camera switch (a controller's right bumper, the Xbox's black button)\n"
+		"changes view with each press, between first person and the view behind\n"
+		"the player; false: the Xbox's, once a second held, through a flying camera." },
+	{ "display.third_person_distance", _config_real, "0.6", "HALO_THIRD_PERSON_DISTANCE", _environment_value, _platform_all,
+		"How far behind the player the view behind it is on foot, as a part of\n"
+		"the Xbox's distance (0.2 to 2; 1 is the Xbox's)." },
 	{ "display.passenger_third_person", _config_boolean, "false", "HALO_PASSENGER_THIRD_PERSON", _environment_value, _platform_all,
 		"Third-person Warthog and Scorpion passengers. Weapon zoom is disabled." },
 	{ "display.high_res_hud", _config_boolean, "true", "HALO_HIGH_RES_HUD", _environment_value, _platform_all,
