@@ -15,6 +15,10 @@ name: Build
 # - Windows, whose minutes cost twice Linux's, builds only Windows;
 # - artifacts are kept for three days.
 #
+# This fork (GeneralAtrox/OpenCE) builds and releases only Windows' release
+# build, without its PDBs: the Linux, Android and web jobs and GitHub Pages
+# are off (if: false), and the Windows job builds no debug flavour.
+#
 # A successful build of main is also published as a GitHub release, the
 # newest marked latest, so that
 # https://github.com/<repository>/releases/latest/download/<file> always
@@ -52,6 +56,8 @@ jobs:
     # links against Debian 11's 32-bit glibc (tools/linux_sysroot.py), not
     # Arch's, so that it starts on SteamOS and older distributions; Arch's
     # 32-bit glibc is for the tests.
+    # (off in this fork: Windows only)
+    if: false
     runs-on: ubuntu-24.04
     container: archlinux:latest
     timeout-minutes: 40
@@ -115,6 +121,8 @@ jobs:
 
   android:
     # The runner image has the Android SDK and NDK, a JDK and CMake.
+    # (off in this fork: Windows only)
+    if: false
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
@@ -235,9 +243,6 @@ jobs:
           path: build/windows/third_party
           key: windows-third-party-${{ hashFiles('tools/windows_build.py') }}
 
-      - name: Debug
-        run: python tools/ci_build.py windows debug
-
       - name: Release
         run: python tools/ci_build.py windows release
 
@@ -249,27 +254,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: halo-windows-debug
-          path: dist/halo-windows-debug
-          retention-days: 3
-
-      - uses: actions/upload-artifact@v4
-        with:
           name: halo-windows-release
           path: dist/halo-windows-release
-          retention-days: 3
-
-      # the PDBs, for crash reports' backtraces (tools/ci_build.py)
-      - uses: actions/upload-artifact@v4
-        with:
-          name: halo-windows-debug-symbols
-          path: dist/halo-windows-debug-symbols
-          retention-days: 3
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: halo-windows-release-symbols
-          path: dist/halo-windows-release-symbols
           retention-days: 3
 
   web:
@@ -278,6 +264,8 @@ jobs:
     # importer and service worker, its sockets, that it starts in a
     # headless Chromium (with no game data, as far as the menus' map), and
     # that two browsers join a room through a local MQTT broker.
+    # (off in this fork: Windows only)
+    if: false
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     env:
@@ -360,7 +348,7 @@ jobs:
     # key (SHA256SUMS.sig; the public key is deploy/release-key.pub); then all
     # but the newest five build-* releases go, tags and all. Only for main,
     # and only when every platform built.
-    needs: [linux, android, windows, web]
+    needs: [windows]
     if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -385,8 +373,8 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          pattern: halo-*
-          path: artifacts
+          name: halo-windows-release
+          path: artifacts/halo-windows-release
 
       - name: Package
         run: |
@@ -425,41 +413,11 @@ jobs:
           # (the network version, which a dedicated server's server.auto_update
           # reads: a new one is started once the game being played is over)
           network_version="$(sed -n 's/^#define HALO_PORT_NETWORK_VERSION \([0-9]*\).*/\1/p' port/linux/include/halo_port_limits.h)"
-          printf '%s\n\nCommit: %s\nBuild: %s\nNetwork version: %s\n\nThe release builds are for playing; the debug builds stop at the first failed assertion and log it.\n' \
+          printf '%s\n\nCommit: %s\nBuild: %s\nNetwork version: %s\n\nThe Windows release build.\n' \
             "$subject" "$COMMIT_URL" "$RUN_URL" "$network_version" > notes.md
           gh release create "$tag" release/* --target "$GITHUB_SHA" --latest \
             --title "Build $GITHUB_RUN_NUMBER (${GITHUB_SHA:0:7})" --notes-file notes.md
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
-
-      # The Windows builds' executables and PDBs to Sentry, which turns the
-      # crash reports of these builds (port/windows/src/win32_crash.c) into
-      # backtraces with function names and lines. Needs the SENTRY_AUTH_TOKEN
-      # secret: an organization auth token of the Sentry organization, which
-      # names the organization and its region itself. The SENTRY_PROJECT
-      # variable can name the project (its slug), else the id in the DSN of
-      # win32_crash.c; SENTRY_ORG and SENTRY_URL (https://de.sentry.io) are
-      # for a personal token instead. A failed upload does not stop the
-      # release.
-      - name: Upload Windows symbols to Sentry
-        continue-on-error: true
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT || '4512207917744208' }}
-          ORG: ${{ vars.SENTRY_ORG }}
-          URL: ${{ vars.SENTRY_URL }}
-          SENTRY_CLI_VERSION: 2.46.0
-        run: |
-          if [ -z "$SENTRY_AUTH_TOKEN" ]; then
-            echo "::warning::no SENTRY_AUTH_TOKEN secret: crash reports of this build will have no function names"
-            exit 0
-          fi
-          if [ -n "$ORG" ]; then export SENTRY_ORG="$ORG"; fi
-          if [ -n "$URL" ]; then export SENTRY_URL="$URL"; fi
-          curl -fsSL -o sentry-cli "https://github.com/getsentry/sentry-cli/releases/download/$SENTRY_CLI_VERSION/sentry-cli-Linux-x86_64"
-          chmod +x sentry-cli
-          ./sentry-cli debug-files upload --wait \
-            artifacts/halo-windows-release artifacts/halo-windows-release-symbols \
-            artifacts/halo-windows-debug artifacts/halo-windows-debug-symbols
 
       - name: Keep the last five
         run: |
@@ -476,7 +434,8 @@ jobs:
     # and the release are one build), and a deployment is never cancelled
     # halfway. The repository's Pages source must be GitHub Actions.
     needs: [release]
-    if: ${{ github.ref == 'refs/heads/main' }}
+    # (off in this fork: Windows only)
+    if: false
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
