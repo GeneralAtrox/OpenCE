@@ -394,6 +394,13 @@ static short player_skin_body_of_unit(
 	return skin_body_of_definition(unit->definition_index);
 }
 
+/* a unit definition's initial weapon (units.c's unit_initial_weapon) */
+struct skin_initial_weapon
+{
+	struct tag_reference weapon;
+	long unused[5];
+};
+
 /* a campaign level's starting profile was given (players.c's
 player_add_equipment, which deletes the unit's weapons first): a skin's
 body left with no weapon, as a Hunter is (it holds none of the level's
@@ -419,8 +426,8 @@ void player_skins_equipment_given(
 	definition = unit_definition_get(unit->definition_index);
 	for (index = 0; index < definition->unit.initial_weapons.count; index++)
 	{
-		struct unit_initial_weapon *initial_weapon = TAG_BLOCK_GET_ELEMENT(&definition->unit.initial_weapons, index,
-			struct unit_initial_weapon);
+		struct skin_initial_weapon *initial_weapon = TAG_BLOCK_GET_ELEMENT(&definition->unit.initial_weapons, index,
+			struct skin_initial_weapon);
 		struct object_placement_data placement_data;
 		long weapon_index;
 
