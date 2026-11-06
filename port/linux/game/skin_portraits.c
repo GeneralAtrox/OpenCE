@@ -40,6 +40,7 @@ struct skin_portrait
 	rectangle2d bounds;
 	long biped;
 	real_rgb_color color;
+	unsigned char hunter;
 };
 
 static struct
@@ -77,6 +78,7 @@ unsigned char skin_portraits_note(
 	portrait->bounds = *bounds;
 	portrait->biped = biped;
 	portrait->color = *color;
+	portrait->hunter = strstr(biped_name, "hunter") != NULL;
 
 	return TRUE;
 }
@@ -142,6 +144,9 @@ static void skin_portrait_render(
 
 	if (node_count <= 0 || node_count > MAXIMUM_NODES_PER_MODEL || width <= 0.f || height <= 0.f)
 		return;
+	/* (a Hunter's idle stands facing the other way) */
+	if (portrait->hunter)
+		yaw += 3.14159265f;
 	animation = skin_portrait_animation(definition->object.animation_graph.index, model);
 	if (animation)
 	{
