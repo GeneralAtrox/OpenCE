@@ -164,6 +164,9 @@ static struct
 	/* and the blows they have struck */
 	long melees[NUMBER_OF_SKIN_BODIES];
 	boolean loaded;
+	/* a player weapon's HUD, for a skin's weapon with none (the Hunter's
+	cannon, an actor's) */
+	long weapon_hud;
 } player_skins_globals;
 
 /* ---------- private code */
@@ -458,6 +461,22 @@ boolean player_skins_unit_is_body(
 	return player_skin_body_of_unit(unit_index) != NONE;
 }
 
+/* the HUD a weapon shows its holder: its own, or for a skin's body's weapon
+with none (the Hunter's cannon, an actor's) a player weapon's, the plasma
+pistol's where the map has it, for its crosshair */
+long player_skins_weapon_hud(
+	long weapon_index,
+	long hud_index)
+{
+	if (hud_index != NONE || weapon_index == NONE || !player_skins_globals.loaded ||
+		player_skin_body_of_unit(object_get(weapon_index)->object.parent_object_index) == NONE)
+	{
+		return hud_index;
+	}
+
+	return player_skins_globals.weapon_hud;
+}
+
 /* a player's Hunter moves by its throttle, at a player's speeds (bipeds.c),
 not by its animations' steps, which go only forward: so it can strafe and
 back away */
@@ -534,6 +553,23 @@ void player_skins_tags_loaded(
 	player_skins_globals.bipeds[_skin_body_chief] = NONE;
 	for (body = _skin_body_chief + 1; body < NUMBER_OF_SKIN_BODIES; body++)
 		player_skins_globals.bipeds[body] = tag_loaded('bipd', skin_body_bipeds[body]);
+	player_skins_globals.weapon_hud = NONE;
+	{
+		static char const *const hud_weapons[] =
+		{
+			"weapons\\plasma pistol\\plasma pistol", "weapons\\plasma rifle\\plasma rifle", "weapons\\needler\\needler",
+			"weapons\\pistol\\pistol", "weapons\\assault rifle\\assault rifle"
+		};
+		short index;
+
+		for (index = 0; index < NUMBEROF(hud_weapons) && player_skins_globals.weapon_hud == NONE; index++)
+		{
+			long weapon = tag_loaded('weap', hud_weapons[index]);
+
+			if (weapon != NONE)
+				player_skins_globals.weapon_hud = weapon_definition_get(weapon)->weapon.interface_definition.hud_interface.index;
+		}
+	}
 	player_skins_globals.loaded = TRUE;
 
 	return;

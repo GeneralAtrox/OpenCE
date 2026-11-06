@@ -2009,13 +2009,18 @@ void hud_update_weapon(
 					weapon->definition_index);
 				struct weapon_interface_state weapon_state;
 
+				/* port: a player's Hunter's cannon (an actor's, with no HUD)
+				shows a player weapon's (port/linux/game/player_skins.c) */
+				extern long player_skins_weapon_hud(long weapon_index, long hud_index);
+
 				weapon_build_weapon_interface_state(
 					weapon_index,
 					&weapon_state);
-				if (definition->weapon.interface_definition.hud_interface.index != NONE)
+				if (player_skins_weapon_hud(weapon_index,
+					definition->weapon.interface_definition.hud_interface.index) != NONE)
 				{
-					long hud_index =
-						definition->weapon.interface_definition.hud_interface.index;
+					long hud_index = player_skins_weapon_hud(weapon_index,
+						definition->weapon.interface_definition.hud_interface.index);
 
 					hud_update_weapon_local_player(
 						local_player_index,
@@ -2094,7 +2099,13 @@ void hud_render_weapon_interface(
 		weapon_build_weapon_interface_state(
 			weapon_index,
 			&weapon_state);
-		hud_index = definition->weapon.interface_definition.hud_interface.index;
+		/* port: (a player's Hunter's cannon: port/linux/game/player_skins.c) */
+		{
+			extern long player_skins_weapon_hud(long weapon_index, long hud_index);
+
+			hud_index = player_skins_weapon_hud(weapon_index,
+				definition->weapon.interface_definition.hud_interface.index);
+		}
 		if (hud_index != NONE)
 		{
 			crosshairs_draw(

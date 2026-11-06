@@ -504,9 +504,11 @@ static long interface_get_weapon_hud_index(
 
 			if (weapon_index != NONE)
 			{
-				long hud_index = weapon_definition_get(
+				/* port: (a player's Hunter's cannon: port/linux/game/player_skins.c) */
+				extern long player_skins_weapon_hud(long weapon_index, long hud_index);
+				long hud_index = player_skins_weapon_hud(weapon_index, weapon_definition_get(
 					weapon_get(weapon_index)->definition_index)->
-					weapon.interface_definition.hud_interface.index;
+					weapon.interface_definition.hud_interface.index);
 
 				if (hud_index != NONE)
 				{
