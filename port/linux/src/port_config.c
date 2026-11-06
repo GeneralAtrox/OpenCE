@@ -576,9 +576,9 @@ static const struct config_setting config_settings[] =
 		"\"chief\" (the Master Chief, in the armor color), an Elite (\"elite\" in\n"
 		"the armor color, or by rank: \"elite_minor\", \"elite_major\",\n"
 		"\"elite_spec_ops\", \"elite_zealot\", \"elite_stealth\"), a Flood combat form\n"
-		"(\"flood_human\", \"flood_elite\") or \"hunter\". A stock multiplayer map has\n"
-		"them all from The Maw's tags (c40.map); a co-op level only its own; a\n"
-		"map without the body plays the Master Chief. multiplayer.skin_2 to\n"
+		"(\"flood_human\", \"flood_elite\") or \"hunter\". A stock multiplayer map and\n"
+		"a co-op campaign level get the bodies from Two Betrayals' tags (c40.map);\n"
+		"a Custom Edition map plays the Master Chief. multiplayer.skin_2 to\n"
 		"skin_16 are the other local players' (split screen)." },
 	{ "multiplayer.skin_2", _config_string, "\"chief\"", "HALO_SKIN_2", _environment_value, _platform_all,
 		"The body local player 2 plays as (multiplayer.skin_1 has the choices)." },

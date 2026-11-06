@@ -73,13 +73,13 @@ void player_skins_tags_unloaded(void);
 
 /* the tags at tag_header, *tag_data_size bytes of the stock map map_name
 (of the cache file type header_type) just read into the tag cache: before
-they are checked, the skins' tags are added to them from The Maw's, and
+they are checked, the skins' tags are added to them from Two Betrayals' (c40), and
 *tag_data_size grows over them. FALSE if none were added */
 boolean skin_tags_import(void *tag_header, long *tag_data_size, short header_type, char const *map_name);
 /* the tags' check refused them: they are as they were read */
 void skin_tags_import_undo(void *tag_header, long *tag_data_size);
 /* the largest map file a tag's bitmap pixels or sound samples may be in:
-file_length, or The Maw's if its tags were added */
+file_length, or Two Betrayals' if its tags were added */
 long skin_tags_file_length(long file_length);
 /* the tags were checked: the added models' vertex and index buffers are
 registered (as the map's are, tags_header_register_vertex_and_index_buffers) */
