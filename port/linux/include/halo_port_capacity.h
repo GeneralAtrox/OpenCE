@@ -96,7 +96,7 @@ the actors, and their knowledge of the units about them (props: with many
 players, more each), have room for several times a level's own. */
 
 #define HALO_PORT_MAXIMUM_ACTORS 1024 /* (256) */
-#define HALO_PORT_MAXIMUM_PROPS 24576 /* (768): 24 for each actor (8192 filled, with x32 extra enemies) */
+#define HALO_PORT_MAXIMUM_PROPS 8192 /* (768) */
 #define HALO_PORT_MAXIMUM_SWARMS 128 /* (32) */
 #define HALO_PORT_MAXIMUM_SWARM_COMPONENTS 1024 /* (256) */
 

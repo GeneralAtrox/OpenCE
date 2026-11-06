@@ -5941,6 +5941,16 @@ static void actor_perception_refresh(
 		short prop_count = enemies.accepted_count + friends.accepted_count;
 		short maximum_prop_count = MAX(enemies.accepted_count + 2, 4);
 
+		/* port: with many actors (network co-op's extra enemies:
+		port/linux/game/coop_enemies.c) the AI's knowledge database fills,
+		and an actor then cannot know the players at all: past half full,
+		an actor keeps one friend more than its enemies (at least two),
+		and past seven eighths none more, leaving the rest to enemies */
+		if (prop_data->actual_count >= HALO_PORT_MAXIMUM_PROPS / 2)
+			maximum_prop_count = MAX(enemies.accepted_count + 1, 2);
+		if (prop_data->actual_count >= HALO_PORT_MAXIMUM_PROPS / 8 * 7)
+			maximum_prop_count = MIN(maximum_prop_count, prop_count);
+
 		if (prop_count < maximum_prop_count)
 		{
 			qsort(
