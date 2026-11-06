@@ -12,6 +12,14 @@ than the ground round them, the clients' objects or the host's ticks could
 take). STATIC MULTIPLIER (network.coop_enemies_multiplier):
 each squad is that many times as large, for any number of players.
 
+The actors have room for MAXIMUM_ACTORS - COOP_ENEMIES_LEVEL_ACTORS extra
+enemies (768) at once, shared by all the level's squads: when the setting
+asks more of the whole level than that, each squad gets the same part of
+its extra enemies (at x32, The Silent Cartographer's squads would have 7719,
+so each gets 9% of its 31 times). Many actors each think as often as a
+stock level's few (actors.c's actor_get_timeslice), and keep room in the
+AI's knowledge for the players (actor_perception.c).
+
 Extra enemies are placed in widening rings around the squad's starting
 locations, on a spot on the same floor, reachable without passing through
 a wall, crate or machine, with room to stand and nobody already there. A
