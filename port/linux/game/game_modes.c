@@ -15,7 +15,8 @@ machine (network_game_manager.h) and the game plays by
   chooses the first zombies after a countdown, a human killed joins them, and
   the zombies win when no human is left, the humans when the time runs out.
 - Tag, You're It (infection.c's, with Infection's roles): on teams. One
-  player is it (a Hunter: player_skins.c) and the rest are humans; it
+  player is it (a Hunter: player_skins.c, at the zombie speed) and the rest
+  are humans; it
   passes on to the human it kills, and whoever is it when the time runs out
   loses.
 - Gun Game (gun_game.c): free for all. Each kill gives the killer the next

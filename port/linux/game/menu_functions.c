@@ -7938,7 +7938,8 @@ static void gametype_option_help(struct widget_instance *list)
 		visible_set(named(list, "op_secondary_weapon", 0), custom);
 	}
 	/* (OPENCE OPTIONS: the mode's own rows, Infection's or Gun Game's, below
-	MODE and HARDCORE) */
+	MODE and HARDCORE; Tag's are Infection's zombie speed, respawn and
+	countdown) */
 	if (named(list, "oce_mode_spinner", 0))
 	{
 		short mode = named(list, "oce_mode_spinner", 0)->parameters.list.selected_index;
@@ -7950,7 +7951,9 @@ static void gametype_option_help(struct widget_instance *list)
 
 			if (!infection && strncmp(row->name, "op_gg_", 6))
 				continue;
-			row->visible = infection ? mode == _game_mode_infection : mode == _game_mode_gun_game;
+			row->visible = infection ? mode == _game_mode_infection || (mode == _game_mode_tag &&
+				(!strcmp(row->name, "op_inf_speed") || !strcmp(row->name, "op_inf_respawn") ||
+				!strcmp(row->name, "op_inf_countdown"))) : mode == _game_mode_gun_game;
 			if (row->visible)
 			{
 				row->vertical_offset = place;

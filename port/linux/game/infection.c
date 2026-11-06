@@ -78,8 +78,8 @@ boolean infection_enabled(
 }
 
 /* Tag, You're It: Infection's round and roles, with one zombie, it, who
-has no skull, no speed and no shields of a zombie's but a Hunter's body
-(player_skins.c); killing a human makes the human it and it a human again,
+has a zombie's speed (to catch the humans) but no skull and no shield
+change, and a Hunter's body (player_skins.c); killing a human makes the human it and it a human again,
 and the time running out makes whoever is it lose. A player joins as a
 human, and a human killed by anyone else, or by themselves, stays one. */
 boolean tag_enabled(
@@ -368,7 +368,7 @@ void infection_reconcile_player(
 	team = role->role == _distributed_infection_role_zombie ? 1 : 0;
 	player->team_index = team;
 	player->network_player_data.team_index = (char)team;
-	player->speed_multiplier = team && !tag_enabled() ? options->infection_zombie_speed / 100.0f : 1.0f;
+	player->speed_multiplier = team ? options->infection_zombie_speed / 100.0f : 1.0f;
 	if (player->unit_index != NONE && (unit = unit_try_and_get(player->unit_index)) != NULL)
 	{
 		infection_apply_shields(DATUM_INDEX_TO_ABSOLUTE_INDEX(player_index), player->unit_index, unit,
