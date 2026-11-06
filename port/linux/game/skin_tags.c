@@ -47,6 +47,7 @@ and is not made: distributed_client_change_valid).
 #include "cache/physical_memory_map.h"
 #include "scenario/scenario_definitions.h"
 #include "bitmaps/bitmap_group.h"
+#include "bitmaps/bitmaps.h"
 #include "game/game.h"
 #include "game/game_globals.h"
 #include "units/unit_definitions.h"
@@ -96,8 +97,9 @@ enum
 	INFLATE_IN_BYTES = 0x10000,
 	INFLATE_OUT_BYTES = 0x40000,
 
-	/* (2: Master Chief's biped, for the menus' map) */
-	SKIN_PACK_VERSION = 2,
+	/* (2: Master Chief's biped, for the menus' map; 3: each bitmap's pixels
+	as many as the texture cache reads) */
+	SKIN_PACK_VERSION = 3,
 
 	REMAP_UNSEEN = -2,
 	REMAP_PENDING = -3,
@@ -682,8 +684,14 @@ static void import_bitmap_ranges(
 	for (index = 0; bitmaps && index < count; index++)
 	{
 		struct bitmap_data const *bitmap = (struct bitmap_data const *)(bitmaps + index * sizeof(struct bitmap_data));
+		/* (as many bytes as the texture cache reads: its size made again from
+		the format and mipmaps, xbox_texture_cache.c's texture_cache_bitmap_new,
+		can be more than the tag's, and the rest would be zeros: black) */
+		struct bitmap_data sized = *bitmap;
+		long size = bitmap_get_pixel_data_size(&sized);
 
-		import_range_add(import, group->pixel_data.file_offset + bitmap->pixels_offset, bitmap->pixels_size);
+		import_range_add(import, group->pixel_data.file_offset + bitmap->pixels_offset,
+			MAX(size, bitmap->pixels_size));
 	}
 
 	return;
