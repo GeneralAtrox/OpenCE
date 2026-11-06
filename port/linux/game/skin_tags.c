@@ -701,7 +701,7 @@ static void import_bitmap_ranges(
 				platform_log("player skins: (debug) donor bitmap pixels %08lx size %ld, its data %08lx+%lx flags %lx",
 					(unsigned long)bitmap->pixels_offset, (long)bitmap->pixels_size,
 					(unsigned long)group->pixel_data.file_offset, (unsigned long)group->pixel_data.size,
-					(unsigned long)group->pixel_data.flags);
+					(unsigned long)group->pixel_data.pad);
 			}
 		}
 	}
