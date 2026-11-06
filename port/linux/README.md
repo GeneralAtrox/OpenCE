@@ -227,11 +227,12 @@ The keyboard and the mouse are a control scheme of their own for the player
 of controller 1: each action has up to two keys or mouse buttons, which
 Settings > Controls Setup (or `[controls]` in `config.toml`) changes. The
 game adds the input of the first gamepad to controller 1. The other
-gamepads operate controllers 2 to 4. With two or more players on this
-computer (co-op, or split screen in a network game) and only one gamepad,
-that gamepad is controller 2 (player 2) and the keyboard and mouse stay
-controller 1; with more gamepads, SPACE on the ADD PLAYER screen does the
-same for the first (refer to the network games' split screen below). The gamepad changes controller only when none of its buttons
+gamepads operate controllers 2 to 4. The first gamepad and the keyboard
+and mouse are always player 1, with one gamepad or more, until SPACE on the
+ADD PLAYER screen gives that gamepad a controller of its own (refer to the
+network games' split screen below). Only the campaign's co-op on one screen
+with a single gamepad makes it controller 2 (player 2) by itself, as co-op
+needs two controllers. The gamepad changes controller only when none of its buttons
 is held. The profile's button layout (Settings > Gamepads) is the
 gamepads' only. Besides the Xbox's five, it has the Master Chief
 Collection's Bumper Jumper: jump on the left bumper, melee on the right,

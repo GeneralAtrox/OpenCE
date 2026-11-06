@@ -4,7 +4,9 @@ XINPUT_SDL.C
 Xbox controllers and the debug keyboard for the Linux build.
 
 Port 0 is always connected: it is the keyboard and mouse, merged with the
-first SDL gamepad when one is present. Further SDL gamepads take ports 1-15.
+first SDL gamepad when one is present, with one gamepad or more (player 1 is
+both), until SPACE on the ADD PLAYER screen parts them. Further SDL gamepads
+take ports 1-15.
 
 In the game the keyboard and mouse are a control scheme of their own
 (port/linux/include/halo_keyboard.h): config.toml's [controls] bind each of
@@ -72,6 +74,8 @@ extern unsigned char network_vote_pad_open(void);
 /* port/linux/game/menu_functions.c: two or more players on this machine
 (co-op, or split screen in a network game) */
 extern unsigned char pc_menu_split_players(void);
+/* port/linux/game/menu_functions.c: the campaign's co-op on one screen */
+extern unsigned char pc_menu_coop_players(void);
 /* port/linux/game/network_test.c: the game's time in seconds while one runs,
 else -1 */
 extern double network_test_game_seconds(void);
@@ -1143,10 +1147,11 @@ static int sdl_gamepads(SDL_Gamepad *gamepads[PORT_COUNT])
 
 /* whether one gamepad is port 1's (port_gamepad) */
 static BOOL lone_gamepad_split;
-/* pc_menu_split_players, as the game's thread last read it (XInputGetState):
-port_gamepad also runs on the input thread's rumble (XInputSetState), which
-must not read the game's state while the game's thread has it */
-static BOOL split_players;
+/* pc_menu_split_players and pc_menu_coop_players, as the game's thread last
+read them (XInputGetState): port_gamepad also runs on the input thread's
+rumble (XInputSetState), which must not read the game's state while the
+game's thread has it */
+static BOOL split_players, coop_players;
 
 /* no button of the gamepad held, its sticks and triggers at rest */
 static BOOL gamepad_idle(SDL_Gamepad *gamepad)
@@ -1166,16 +1171,19 @@ static BOOL gamepad_idle(SDL_Gamepad *gamepad)
 	return TRUE;
 }
 
-/* the gamepad of a port: the first shares port 0 with the keyboard, but for
-two or more players with one gamepad (co-op, split screen), port 1 has it
-(the keyboard's player is 1, the gamepad's 2). It changes port only at rest:
-a button held across the change would be pressed again on the other port
-(the B that leaves a profile screen leaving the game as player 1's) */
+/* the gamepad of a port: the first shares port 0 with the keyboard (player 1
+is both), with one gamepad or more, until SPACE on the ADD PLAYER screen
+(keyboard_alone): it then takes the first port no gamepad has. The campaign's
+co-op on one screen with one gamepad gives it port 1 by itself, as co-op
+needs two controllers (the keyboard's player is 1, the gamepad's 2). It
+changes port only at rest: a button held across the change would be pressed
+again on the other port (the B that leaves a profile screen leaving the game
+as player 1's) */
 static SDL_Gamepad *port_gamepad(SDL_Gamepad *gamepads[PORT_COUNT], int count, int port)
 {
 	if (count == 1)
 	{
-		BOOL split = split_players;
+		BOOL split = coop_players;
 
 		if (split != lone_gamepad_split && gamepad_idle(gamepads[0]))
 			lone_gamepad_split = split;
@@ -1185,9 +1193,9 @@ static SDL_Gamepad *port_gamepad(SDL_Gamepad *gamepads[PORT_COUNT], int count, i
 	/* (back to one player: the keyboard shares port 0 again) */
 	if (!split_players)
 		keyboard_alone_wanted = FALSE;
-	if (keyboard_alone != keyboard_alone_wanted && count > 1 && gamepad_idle(gamepads[0]))
+	if (keyboard_alone != keyboard_alone_wanted && count >= 1 && gamepad_idle(gamepads[0]))
 		keyboard_alone = keyboard_alone_wanted;
-	if (keyboard_alone && count > 1 && count < PORT_COUNT)
+	if (keyboard_alone && count >= 1 && count < PORT_COUNT)
 		return port == 0 ? NULL : port == count ? gamepads[0] : port < count ? gamepads[port] : NULL;
 	return port < count ? gamepads[port] : NULL;
 }
@@ -1643,6 +1651,7 @@ DWORD WINAPI XInputGetState(HANDLE device, PXINPUT_STATE state)
 	virtual_gamepads_update();
 	platform_pump_events();
 	split_players = pc_menu_split_players() != 0;
+	coop_players = pc_menu_coop_players() != 0;
 	count = sdl_gamepads(gamepads);
 	controller_device_update((short)port, port_gamepad(gamepads, count, port));
 	/* Keep physical remapping separate from the keyboard and touch controls. */

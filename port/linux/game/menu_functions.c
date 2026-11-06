@@ -2172,7 +2172,7 @@ with player 2's controller ("port coop player 2"), then New Game's levels
 (ui_widget.c, widget_takes_events_of_controller). The main menu and
 Multiplayer go back to one player (main_menu_initialize,
 multiplayer_type_menu_initialize).
-With one gamepad, it is player 2's (pc_menu_split_players) */
+With one gamepad, it is player 2's (pc_menu_coop_players) */
 
 /* "port coop begin": two players, player 1 on its profile (campaign_profile)
 and the controller that chose co-op */
@@ -5810,8 +5810,9 @@ static short lobby_player_count;
 /* split screen: up to 4 players on this machine. In the lobby, a controller
 not playing presses START to join ("port lobby join"), then chooses a
 profile (its screen, "port lobby player choose"); ADD PLAYER ("port lobby
-add player") gives one gamepad its own controller first (as it shares
-player 1's: pc_menu_split_players). A player's B leaves the game alone ("port
+add player") opens the SELECT PROFILE screen, whose SPACE gives the
+gamepad that shares player 1's controller with the keyboard one of its own
+(join4_keyboard). A player's B leaves the game alone ("port
 lobby leave"; the machine's last leaves it). In game, a player's pause menu's
 QUIT is theirs (the Xbox's "mp game player quit") */
 static struct
@@ -5863,12 +5864,20 @@ static short lobby_local_player_count(void)
 
 /* (xinput_sdl.c) whether this machine has, or is adding, a second player: co-op,
 or split screen in a network game (a player who quit keeps their part of the
-screen until the game ends). Then one gamepad is its own controller, not
-sharing player 1's with the keyboard */
+screen until the game ends). The first gamepad still shares player 1's
+controller with the keyboard, until SPACE on the SELECT PROFILE screen
+(join4_keyboard); back to one player, it shares it again */
 unsigned char pc_menu_split_players(void)
 {
 	return player_spawn_count >= 2 || lobby_join.adding || lobby_join.controller != NONE ||
 		lobby_local_player_count() >= 2 || players_port_local_player_count() >= 2;
+}
+
+/* (xinput_sdl.c) the campaign's co-op on one screen ("port coop begin"): with
+one gamepad, it is player 2's by itself, as co-op needs two controllers */
+unsigned char pc_menu_coop_players(void)
+{
+	return player_spawn_count >= 2;
 }
 
 /* the lobby's widget that has the focus (the one a press goes to) */
