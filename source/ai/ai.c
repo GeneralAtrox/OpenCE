@@ -1941,6 +1941,18 @@ void ai_update(
 	boolean move_actors_randomly = ai_profile.move_actors_randomly;
 
 	profile_enter(ai_update_section);
+	/* port: (the AI turned on and off, logged) */
+	{
+		static int logged_active = -1;
+
+		if (update_ai && (int)ai_globals->ai_active != logged_active)
+		{
+			extern void platform_log(char const *format, ...);
+
+			logged_active = (int)ai_globals->ai_active;
+			platform_log("ai: %s", logged_active ? "on" : "off");
+		}
+	}
 
 	if (update_ai)
 	{

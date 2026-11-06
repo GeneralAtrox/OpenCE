@@ -4298,7 +4298,7 @@ void actors_update(
 	if (++actor_port_timeslices.log_ticks >= 10 * TICKS_PER_SECOND)
 	{
 		actor_port_timeslices.log_ticks = 0;
-		if (actor_data->actual_count > ACTOR_PORT_STOCK_ACTORS)
+		if (actor_data->actual_count > 0)
 		{
 			extern void platform_log(char const *format, ...);
 			struct actor_iterator counter;
