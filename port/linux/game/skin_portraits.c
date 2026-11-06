@@ -14,10 +14,11 @@ stock picture. */
 #include "models/models.h"
 #include "objects/object_definitions.h"
 #include "rasterizer/rasterizer.h"
-#include "rasterizer/xbox/rasterizer_xbox.h"
 #include "render/render.h"
 #include "render/render_cameras.h"
 #include "tag_files/tag_groups.h"
+#include <xtl.h>
+#include "rasterizer/xbox/rasterizer_xbox.h"
 
 #include <math.h>
 #include <string.h>
@@ -30,6 +31,8 @@ enum
 	SKIN_PORTRAIT_NO_PLANAR_FOG = 1 << 2,
 	/* an animation's frames a second */
 	SKIN_PORTRAIT_FRAMES_PER_SECOND = 30,
+	/* the rasterizer's _rasterizer_target_render_primary */
+	SKIN_PORTRAIT_TARGET_PRIMARY = 0,
 };
 
 struct skin_portrait
@@ -195,7 +198,7 @@ static void skin_portrait_render(
 	memset(&parameters, 0, sizeof(parameters));
 	parameters.camera = camera;
 	render_camera_build_frustum(&parameters.camera, NULL, &parameters.frustum, TRUE);
-	parameters.rasterizer_target = _rasterizer_target_render_primary;
+	parameters.rasterizer_target = SKIN_PORTRAIT_TARGET_PRIMARY;
 	/* (a window of its own: the transparent geometry and lights begun and
 	ended with it) */
 	parameters.window_index = 0;
