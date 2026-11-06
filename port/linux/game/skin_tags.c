@@ -1768,6 +1768,9 @@ boolean skin_tags_read(
 {
 	long absolute_index = tag_index & 0xFFFF;
 	long index;
+	unsigned long covered = 0;
+	/* (reads the pack has no bytes for, logged: they are zeros) */
+	static long uncovered_logs = 0;
 
 	if (!skin_tags_globals.imported || tag_index == NONE || absolute_index < skin_tags_globals.first_index ||
 		absolute_index >= skin_tags_globals.first_index + skin_tags_globals.count)
@@ -1787,12 +1790,19 @@ boolean skin_tags_read(
 			end = range->offset + range->size;
 		if (start >= end)
 			continue;
+		covered += end - start;
 		if (fseek(skin_tags_globals.pack, (long)(range->pack_offset + (start - range->offset)), SEEK_SET) ||
 			fread((byte *)buffer + (start - (unsigned long)offset), 1, end - start, skin_tags_globals.pack) !=
 				end - start)
 		{
 			platform_log("player skins: could not read %ld bytes at %08lx", size, (unsigned long)offset);
 		}
+	}
+	if (covered < (unsigned long)size && uncovered_logs < 40)
+	{
+		uncovered_logs++;
+		platform_log("player skins: tag %ld's %ld bytes at %08lx: %lu of them not in the skins' cache file (zeros)",
+			absolute_index, size, (unsigned long)offset, (unsigned long)size - covered);
 	}
 
 	return TRUE;
