@@ -2091,15 +2091,17 @@ def _join4(base: str) -> list:
                       '<on event="back"/>',
                       '<on event="x" run="port join4 skin"/>',
                       *selected])
-    # (a player in the game already)
+    # (a player in the game already: X changes their skin too, which the
+    # host is told at once)
     lines += _widget(f"{base}/join4_qtr_playing",
                      [("width", 254), ("height", 164), ("bitmap", f"{xbox}4way_profile_border")],
                      ['<on event="a" run="port join4 done" back="true"/>',
                       '<on event="start" run="port join4 done" back="true"/>',
                       '<on event="b"/>', '<on event="back"/>',
+                      '<on event="x" run="port join4 skin"/>',
                       *selected])
-    # (a choosing or selected quarter's skin, and what its X and Y do:
-    # menu_functions.c's join4_skin_show)
+    # (a choosing, selected or playing quarter's skin, and what its X and Y
+    # do: menu_functions.c's join4_skin_show)
     lines += _widget(f"{base}/join4_skin", [("type", "text"), ("width", 254), ("height", 32),
                                                 ("font", "ui\\small_ui"), ("color", "#FFFFFFFF"),
                                                 ("align", "center"), ("text_flags", "no_focus_test")], [])

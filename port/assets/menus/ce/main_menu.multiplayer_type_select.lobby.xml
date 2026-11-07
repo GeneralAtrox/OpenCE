@@ -348,6 +348,7 @@
 		<on event="start" run="port join4 done" back="true"/>
 		<on event="b"/>
 		<on event="back"/>
+		<on event="x" run="port join4 skin"/>
 		<child widget="ui\shell\main_menu\multiplayer_type_select\split_screen\4way_profile_select\qtr_screen_profile_color_pic_selected"/>
 		<child widget="ui\shell\main_menu\multiplayer_type_select\split_screen\4way_profile_select\qtr_screen_profile_selected_text"/>
 		<child widget="ui\shell\main_menu\multiplayer_type_select\split_screen\4way_profile_select\qtr_screen_profile_selected_name"/>

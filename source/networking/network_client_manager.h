@@ -56,6 +56,10 @@ boolean network_game_client_join_first_available_game(
 	void);
 boolean network_game_client_set_team(
 	char team_index);
+/* port: this machine's player of the controller sent to the host again, with
+the skin it has chosen since (FALSE: no such player in a game's lobby) */
+boolean network_game_client_port_update_skin(
+	short controller_index);
 /* whether the advertised game's host has this machine's network version
 (else the player is told, and it is not to be joined) */
 /* port: whether the advertised game is under way, not in its lobby */

@@ -6669,12 +6669,15 @@ controller's presses (pc_menu_screen_routes_by_controller).
 A choosing quarter's spinner shows only the profiles its player may pick
 (none another player has, plays or selected), a profile made for it when
 there is none; its Y makes a new one ("Player <n>", lobby_profile_make), and
-X (in a choosing or selected quarter) the player's next skin (player_skins.c:
-multiplayer.skin_<n>, saved) */
+X (in a choosing or selected quarter, or a playing one: player 1 too, while
+the others set up) the player's next skin (player_skins.c:
+multiplayer.skin_<n>, saved), which the host is told of at once for a player
+in the game already (network_game_client_port_update_skin) */
 
 #define JOIN4_NAME "pc\\main_menu\\multiplayer_type_select\\lobby\\join4_screen"
 #define JOIN4_SELECT_NAME "pc\\main_menu\\multiplayer_type_select\\lobby\\join4_qtr_select"
 #define JOIN4_READY_NAME "pc\\main_menu\\multiplayer_type_select\\lobby\\join4_qtr_ready"
+#define JOIN4_PLAYING_NAME "pc\\main_menu\\multiplayer_type_select\\lobby\\join4_qtr_playing"
 /* the quarters, and the profiles a quarter's spinner may have
 (player_profiles_list_initialize's list) */
 #define JOIN4_QUARTERS 4
@@ -6690,6 +6693,9 @@ extern long ui_widget_port_spinner_first_available(struct widget_instance *widge
 extern short player_skins_local_choice(long local_player_index);
 extern wchar_t const *player_skins_name(short skin);
 extern short player_skins_local_step(long local_player_index, short direction);
+/* (network_client_manager.c) a player in the game's lobby sent again, with
+its skin */
+extern boolean network_game_client_port_update_skin(short controller_index);
 extern char const *player_skins_portrait_biped(short skin, real_rgb_color *rank_color, unsigned char *ranked);
 /* (skin_portraits.c) a body drawn in a box this frame, after the menus */
 extern unsigned char skin_portraits_note(rectangle2d const *bounds, char const *biped_name,
@@ -6911,10 +6917,15 @@ static boolean join4_choosing(struct widget_instance *quarter)
 	return join4_set(controller, _join4_choosing);
 }
 
-/* "port join4 skin" (X): the quarter's player's next skin */
+/* "port join4 skin" (X): the quarter's player's next skin; a player in the
+game already has it from the host at once */
 static boolean join4_skin(struct widget_instance *quarter)
 {
-	player_skins_local_step(controller_of(quarter), 1);
+	short controller = controller_of(quarter);
+
+	player_skins_local_step(controller, 1);
+	if (lobby_controller_playing(controller) && !network_game_client_port_update_skin(controller))
+		platform_log("menus: player %d's skin could not be sent to the host", controller + 1);
 	ui_play_audio_feedback_sound(SOUND_CURSOR);
 	return TRUE;
 }
@@ -7038,18 +7049,20 @@ static void join4_update(struct widget_instance *widget)
 	struct widget_instance *quarter;
 	long select = tag_loaded('DeLa', JOIN4_SELECT_NAME);
 	long ready = tag_loaded('DeLa', JOIN4_READY_NAME);
+	long playing = tag_loaded('DeLa', JOIN4_PLAYING_NAME);
 
 	boolean selecting[JOIN4_QUARTERS] = { FALSE };
 	boolean choosing[JOIN4_QUARTERS] = { FALSE };
 	short controller;
 
 	/* (a choosing quarter's profiles, as others pick theirs; each quarter's
-	skin) */
+	skin, a playing one's too) */
 	for (quarter = screen->child; quarter; quarter = quarter->next)
 	{
 		controller = quarter->local_player_index;
 		if (controller < 0 || controller >= JOIN4_QUARTERS || quarter->definition_tag_index == NONE ||
-			(quarter->definition_tag_index != select && quarter->definition_tag_index != ready))
+			(quarter->definition_tag_index != select && quarter->definition_tag_index != ready &&
+				quarter->definition_tag_index != playing))
 		{
 			continue;
 		}

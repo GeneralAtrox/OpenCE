@@ -346,7 +346,9 @@ profile with left and right (only those no other player has are shown, and
 a profile "Player <n>" is made for it when there are none; Y makes a new one,
 which PROFILES can rename), presses X to change its skin (the body it plays
 as: `multiplayer.skin_<n>`, below, saved), and presses A to select it; its
-B goes back a step. A when all players have selected their profiles (Enter on
+B goes back a step. A player in the game already, player 1 among them,
+changes their skin with X in their quarter too (E on the keyboard), and the
+lobby has it at once. A when all players have selected their profiles (Enter on
 the keyboard) brings them into the lobby; player 1's B (Escape) goes back
 without them. The keyboard and the first gamepad share controller 1 until
 SPACE is pressed on that screen: the keyboard is then player 1 alone, and

@@ -3465,3 +3465,28 @@ boolean network_game_client_set_team(
 	return success;
 }
 
+/* port: this machine's player of the controller sent to the host again, with
+the skin it has chosen since it joined (ADD PLAYER's X:
+port/linux/game/menu_functions.c's join4_skin); FALSE without such a player
+in a game's lobby */
+boolean network_game_client_port_update_skin(
+	short controller_index)
+{
+	struct network_game_client *client = global_network_game_client_get();
+	short player_index;
+
+	if (!client || client->state != _network_game_client_state_pregame)
+		return FALSE;
+	for (player_index = 0; player_index < MAXIMUM_NUMBER_OF_PLAYERS; player_index++)
+	{
+		struct network_player player = client->game.players[player_index];
+
+		if (network_player_is_valid(&player) && player.machine_index == (char)client->machine_index &&
+			player.controller_index == (char)controller_index)
+		{
+			return network_game_client_update_local_player_data(client, &player);
+		}
+	}
+	return FALSE;
+}
+
